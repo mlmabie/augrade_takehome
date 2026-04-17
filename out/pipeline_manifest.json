@@ -1,0 +1,45 @@
+{
+  "input_file": "Airport Doors_MEZZ.dxf",
+  "snap_tolerance": 0.5,
+  "polygon_counts": {
+    "walls": 274,
+    "columns": 572,
+    "curtain_walls": 304
+  },
+  "provenance_summary": {
+    "walls": {
+      "raw_layer_count": 10,
+      "variant_group_count": 10,
+      "multi_variant_group_count": 0,
+      "target_entity_count": 16920
+    },
+    "columns": {
+      "raw_layer_count": 5,
+      "variant_group_count": 5,
+      "multi_variant_group_count": 0,
+      "target_entity_count": 9208
+    },
+    "curtain_walls": {
+      "raw_layer_count": 10,
+      "variant_group_count": 8,
+      "multi_variant_group_count": 2,
+      "target_entity_count": 8706
+    }
+  },
+  "artifacts": [
+    "tokenization_output.json",
+    "analysis_summary.json",
+    "analysis_report.md",
+    "provenance_index.json",
+    "raw_all.svg",
+    "raw_target_families.svg",
+    "extracted_overlay.svg",
+    "walls.svg",
+    "columns.svg",
+    "curtain_walls.svg",
+    "wall_connectivity_snap_0_5.svg",
+    "dashboard.html",
+    "merge_lab.html",
+    "merge_lab_data.json"
+  ]
+}

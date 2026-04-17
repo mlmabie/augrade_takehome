@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Airport DXF Analysis Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f3ef;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #666666;
+      --line: #e5e2db;
+      --shadow: 0 12px 40px rgba(22, 22, 22, 0.08);
+      --radius: 18px;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: linear-gradient(180deg, #f6f4ef 0%, #efefe8 100%); color: var(--ink); }
+    a { color: #0e5ba8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .page { width: min(98vw, 2200px); max-width: 2200px; margin: 0 auto; padding: 18px 14px 40px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .hero-card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero-card { padding: 18px; }
+    .hero h1 { margin: 0 0 6px; font-size: 2.0rem; line-height: 1; }
+    .hero p { margin: 6px 0; color: var(--muted); font-size: 0.94rem; max-width: 64ch; }
+    .hero img {
+      width: 100%;
+      max-height: min(280px, 42vh);
+      min-height: 200px;
+      object-fit: contain;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      display: block;
+      background: #fff;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .metric-card {
+      padding: 12px 14px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--accent);
+    }
+    .metric-title { font-size: 0.86rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .metric-value { font-size: 1.55rem; margin: 6px 0 4px; font-weight: 700; }
+    .metric-detail { color: var(--muted); font-size: 0.84rem; line-height: 1.3; }
+    .family-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .section-title {
+      margin: 22px 0 10px;
+      font-size: 1.28rem;
+      line-height: 1.1;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .panel { padding: 16px; }
+    .panel h2, .panel h3 { margin-top: 0; }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: start;
+    }
+    .chart-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .chart-card h3 { margin: 0 0 10px; font-size: 1rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 9px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+    .feature-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .feature-card img {
+      width: 100%;
+      display: block;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      margin: 10px 0 6px;
+      background: #fff;
+    }
+    .feature-meta h3 { margin: 4px 0; font-size: 1rem; }
+    .feature-meta p { margin: 4px 0; color: var(--muted); font-size: 0.88rem; }
+    .family-chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--chip) 14%, white);
+      color: #222;
+      border: 1px solid color-mix(in srgb, var(--chip) 30%, white);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .feature-links { display: flex; gap: 12px; margin: 2px 0 8px; font-size: 0.88rem; }
+    details {
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #fbfbfd;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      overflow: auto;
+      font-size: 0.8rem;
+      line-height: 1.3;
+    }
+    .note {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.38;
+    }
+    .chart-svg { width: 100%; height: auto; display: block; }
+    .file-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px 16px;
+      padding-left: 18px;
+    }
+    @media (max-width: 1700px) {
+      .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1360px) {
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1400px) {
+      .chart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .family-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1100px) {
+      .hero, .two-col, .chart-grid, .feature-grid, .metric-grid, .family-strip {
+        grid-template-columns: 1fr;
+      }
+      .file-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>Airport DXF Analysis Dashboard</h1>
+        <p>This dashboard turns the mezzanine DXF into something you can read like a data system instead of a flat CAD dump: raw primitive mix, closure-driven tokenization, family geometry distributions, representative zoom panels, and snippets of DXF code from the recovered features.</p>
+        <p>The key pattern is visible in the stats and the images: columns are mostly direct closed carriers, curtain walls are regular local panels, and walls are the hard case because they need graph closure across fragmented linework.</p>
+      </div>
+      <div class="hero-card">
+        <img src="extracted_overlay.svg" alt="Overlay preview">
+      </div>
+    </section>
+
+    <section>
+      <div class="metric-grid"><div class='metric-card' style='--accent:#111111'><div class='metric-title'>Runtime</div><div class='metric-value'>1.52s</div><div class='metric-detail'>parse + extraction + stats</div></div><div class='metric-card' style='--accent:#444444'><div class='metric-title'>Scoped Primitives</div><div class='metric-value'>34,834</div><div class='metric-detail'>target-layer entities</div></div><div class='metric-card' style='--accent:#0b7285'><div class='metric-title'>Consumed Length</div><div class='metric-value'>19.9%</div><div class='metric-detail'>228,197 / 1,144,751 units</div></div><div class='metric-card' style='--accent:#6c5ce7'><div class='metric-title'>Direct vs Graph</div><div class='metric-value'>699 / 451</div><div class='metric-detail'>direct closures / graph faces</div></div></div>
+      <div class="family-strip"><div class='metric-card' style='--accent:#2f5bff'><div class='metric-title'>Walls</div><div class='metric-value'>274</div><div class='metric-detail'>median area 1,480.3</div></div><div class='metric-card' style='--accent:#d9342b'><div class='metric-title'>Columns</div><div class='metric-value'>572</div><div class='metric-detail'>median area 695.6</div></div><div class='metric-card' style='--accent:#1b9e5a'><div class='metric-title'>Curtain Walls</div><div class='metric-value'>304</div><div class='metric-detail'>median area 25.0</div></div></div>
+    </section>
+
+    <h2 class="section-title">Provenance</h2>
+    <section>
+      <div class="metric-grid"><div class='metric-card' style='--accent:#7c4dff'><div class='metric-title'>Raw Layers</div><div class='metric-value'>25</div><div class='metric-detail'>scoped target layers</div></div><div class='metric-card' style='--accent:#9c6644'><div class='metric-title'>Variant Groups</div><div class='metric-value'>23</div><div class='metric-detail'>canonical family-layer groups</div></div><div class='metric-card' style='--accent:#007f5f'><div class='metric-title'>Multi-Variant Groups</div><div class='metric-value'>2</div><div class='metric-detail'>groups with more than one raw layer</div></div><div class='metric-card' style='--accent:#c05f00'><div class='metric-title'>Multi-Layer Polygons</div><div class='metric-value'>22</div><div class='metric-detail'>recovered tokens drawing from multiple raw layers</div></div></div>
+    </section>
+
+    <h2 class="section-title">Representative Feature Zooms</h2>
+    <section class="feature-grid">
+      <article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#2f5bff'>Walls</span><h3>Wall, lower-mid area</h3><p>area 863.9 | aspect 1.00 | vertices 4</p><p>layers: A-MEZZANINE WALL FULL</p><p>source entities: 1 | types: LWPOLYLINE:1</p></div><img src='dashboard_assets/walls_01.svg' alt='Wall, lower-mid area zoom'/><div class='feature-links'><a href='dashboard_assets/walls_01.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>A-MEZZANINE WALL FULL</td><td>A MEZZANINE WALL FULL</td><td>single</td><td>3,662</td><td>3DFACE:13, ARC:139, ELLIPSE:1, LINE:2275</td></tr></tbody></table></details><details><summary>LWPOLYLINE on A-MEZZANINE WALL FULL</summary><pre>0
+LWPOLYLINE
+5
+1EE0E
+330
+70
+100
+AcDbEntity
+8
+A-MEZZANINE WALL FULL
+6
+ByBlock
+100
+AcDbPolyline
+90
+        4
+70
+     1
+43
+0.0
+10
+20678.04140230581
+20
+16308.41477622633
+10
+20690.76728813267
+20
+16295.68889039956
+10
+20724.70823301455
+20
+16329.62983528144
+10
+20711.98234718792
+20
+16342.35572110821</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#2f5bff'>Walls</span><h3>Wall, median area</h3><p>area 1,488.0 | aspect 1.00 | vertices 4</p><p>layers: A-MEZZANINE WALL FULL</p><p>source entities: 1 | types: LWPOLYLINE:1</p></div><img src='dashboard_assets/walls_02.svg' alt='Wall, median area zoom'/><div class='feature-links'><a href='dashboard_assets/walls_02.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>A-MEZZANINE WALL FULL</td><td>A MEZZANINE WALL FULL</td><td>single</td><td>3,662</td><td>3DFACE:13, ARC:139, ELLIPSE:1, LINE:2275</td></tr></tbody></table></details><details><summary>LWPOLYLINE on A-MEZZANINE WALL FULL</summary><pre>0
+LWPOLYLINE
+5
+1EB43
+102
+{ACAD_REACTORS
+330
+2211A
+102
+}
+330
+70
+100
+AcDbEntity
+8
+A-MEZZANINE WALL FULL
+100
+AcDbPolyline
+90
+        4
+70
+     1
+43
+0.0
+10
+7509.644989101391
+20
+1495.559307779302
+10
+7465.804368667741
+20
+1451.718687345798
+10
+7448.833805919334
+20
+1468.689250094234
+10
+7492.674426352838
+20
+1512.529870527797</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#2f5bff'>Walls</span><h3>Wall, highest aspect</h3><p>area 2,788.8 | aspect 112.50 | vertices 4</p><p>layers: A-MEZZANINE WALL FULL</p><p>source entities: 3 | types: LINE:2, LWPOLYLINE:1</p></div><img src='dashboard_assets/walls_03.svg' alt='Wall, highest aspect zoom'/><div class='feature-links'><a href='dashboard_assets/walls_03.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>A-MEZZANINE WALL FULL</td><td>A MEZZANINE WALL FULL</td><td>single</td><td>3,662</td><td>3DFACE:13, ARC:139, ELLIPSE:1, LINE:2275</td></tr></tbody></table></details><details><summary>LINE on A-MEZZANINE WALL FULL</summary><pre>0
+LINE
+5
+2F587
+102
+{ACAD_REACTORS
+330
+35B90
+102
+}
+330
+70
+100
+AcDbEntity
+8
+A-MEZZANINE WALL FULL
+100
+AcDbLine
+10
+23213.88215141265
+20
+15795.76247666002
+30
+0.0
+11
+23218.42416479984
+21
+15800.76158889698
+31
+0.0</pre></details><details><summary>LINE on A-MEZZANINE WALL FULL</summary><pre>0
+LINE
+5
+2F588
+102
+{ACAD_REACTORS
+330
+35B90
+102
+}
+330
+70
+100
+AcDbEntity
+8
+A-MEZZANINE WALL FULL
+100
+AcDbLine
+10
+22655.8821620735
+20
+15795.87155275629
+30
+0.0
+11
+22660.88315816025
+21
+15800.87057527271
+31
+0.0</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#d9342b'>Columns</span><h3>Column, small</h3><p>area 196.0 | aspect 1.00 | vertices 4</p><p>layers: S-COLUMN</p><p>source entities: 1 | types: LWPOLYLINE:1</p></div><img src='dashboard_assets/columns_01.svg' alt='Column, small zoom'/><div class='feature-links'><a href='dashboard_assets/columns_01.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>S-COLUMN</td><td>S COLUMN</td><td>single</td><td>1,263</td><td>CIRCLE:1, ELLIPSE:8, LINE:916, LWPOLYLINE:338</td></tr></tbody></table></details><details><summary>LWPOLYLINE on S-COLUMN</summary><pre>0
+LWPOLYLINE
+5
+10886
+102
+{ACAD_REACTORS
+330
+2129D
+330
+21365
+330
+35B90
+102
+}
+330
+70
+100
+AcDbEntity
+8
+S-COLUMN
+100
+AcDbPolyline
+90
+        5
+70
+     0
+43
+0.0
+10
+20829.80534045361
+20
+15350.22310027421
+10
+20819.9033832027
+20
+15340.32606826451
+10
+20829.80041521241
+20
+15330.4241110136
+10
+20839.70237246331
+20
+15340.32114302331
+...
+...</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#d9342b'>Columns</span><h3>Column, typical</h3><p>area 711.1 | aspect 1.07 | vertices 4</p><p>layers: S-COLUMN</p><p>source entities: 4 | types: LINE:4</p></div><img src='dashboard_assets/columns_02.svg' alt='Column, typical zoom'/><div class='feature-links'><a href='dashboard_assets/columns_02.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>S-COLUMN</td><td>S COLUMN</td><td>single</td><td>1,263</td><td>CIRCLE:1, ELLIPSE:8, LINE:916, LWPOLYLINE:338</td></tr></tbody></table></details><details><summary>LINE on S-COLUMN</summary><pre>0
+LINE
+5
+17350
+102
+{ACAD_REACTORS
+330
+2129D
+330
+21316
+102
+}
+330
+70
+100
+AcDbEntity
+8
+S-COLUMN
+62
+     7
+100
+AcDbLine
+10
+11222.66271125479
+20
+6908.461731904827
+30
+0.0
+11
+11241.75458020388
+21
+6927.553600853862
+31
+0.0</pre></details><details><summary>LINE on S-COLUMN</summary><pre>0
+LINE
+5
+17351
+102
+{ACAD_REACTORS
+330
+20B24
+330
+20B25
+330
+2129D
+330
+21316
+102
+}
+330
+70
+100
+AcDbEntity
+8
+S-COLUMN
+62
+     7
+100
+AcDbLine
+10
+11241.75458020388
+20
+6927.553600853862
+30
+0.0
+11
+11261.55357007709
+21
+6907.754610980657
+31
+0.0</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#d9342b'>Columns</span><h3>Column, large</h3><p>area 2,592.0 | aspect 1.12 | vertices 4</p><p>layers: S-COLUMN</p><p>source entities: 4 | types: LINE:4</p></div><img src='dashboard_assets/columns_03.svg' alt='Column, large zoom'/><div class='feature-links'><a href='dashboard_assets/columns_03.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>S-COLUMN</td><td>S COLUMN</td><td>single</td><td>1,263</td><td>CIRCLE:1, ELLIPSE:8, LINE:916, LWPOLYLINE:338</td></tr></tbody></table></details><details><summary>LINE on S-COLUMN</summary><pre>0
+LINE
+5
+16E46
+102
+{ACAD_REACTORS
+330
+2129D
+330
+212BC
+102
+}
+330
+70
+100
+AcDbEntity
+8
+S-COLUMN
+6
+ByBlock
+62
+     7
+100
+AcDbLine
+10
+22778.52540821895
+20
+16847.54765024208
+30
+0.0
+11
+22724.52540821895
+21
+16847.54765024208
+31
+0.0</pre></details><details><summary>LINE on S-COLUMN</summary><pre>0
+LINE
+5
+16E47
+102
+{ACAD_REACTORS
+330
+2129D
+330
+212BC
+102
+}
+330
+70
+100
+AcDbEntity
+8
+S-COLUMN
+6
+ByBlock
+62
+     7
+100
+AcDbLine
+10
+22724.52540821895
+20
+16847.54765024208
+30
+0.0
+11
+22724.52540821895
+21
+16895.54765024208
+31
+0.0</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#1b9e5a'>Curtain Walls</span><h3>Curtain wall, small</h3><p>area 25.0 | aspect 4.00 | vertices 4</p><p>layers: A-GLAZING-MULLION</p><p>source entities: 1 | types: LWPOLYLINE:1</p></div><img src='dashboard_assets/curtain_walls_01.svg' alt='Curtain wall, small zoom'/><div class='feature-links'><a href='dashboard_assets/curtain_walls_01.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>A-GLAZING-MULLION</td><td>A GLAZING MULLION</td><td>complementary</td><td>587</td><td>LWPOLYLINE:587</td></tr></tbody></table></details><details><summary>A GLAZING MULLION (complementary)</summary><p>Same broad region (97% overlap) but complementary entity types.</p><p>raw layers: A-GLAZING MULLION, A-GLAZING-MULLION</p></details><details><summary>LWPOLYLINE on A-GLAZING-MULLION</summary><pre>0
+LWPOLYLINE
+5
+20112
+330
+70
+100
+AcDbEntity
+8
+A-GLAZING-MULLION
+6
+ByBlock
+100
+AcDbPolyline
+90
+        4
+70
+     1
+43
+0.0
+10
+2672.166641772085
+20
+1911.999997970765
+10
+2674.66664177207
+20
+1911.999999294349
+10
+2674.666635889429
+20
+1921.999999294349
+10
+2672.166635889415
+20
+1921.999997970736</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#1b9e5a'>Curtain Walls</span><h3>Curtain wall, typical</h3><p>area 25.0 | aspect 4.00 | vertices 4</p><p>layers: A-GLAZING-MULLION</p><p>source entities: 1 | types: LWPOLYLINE:1</p></div><img src='dashboard_assets/curtain_walls_02.svg' alt='Curtain wall, typical zoom'/><div class='feature-links'><a href='dashboard_assets/curtain_walls_02.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>A-GLAZING-MULLION</td><td>A GLAZING MULLION</td><td>complementary</td><td>587</td><td>LWPOLYLINE:587</td></tr></tbody></table></details><details><summary>A GLAZING MULLION (complementary)</summary><p>Same broad region (97% overlap) but complementary entity types.</p><p>raw layers: A-GLAZING MULLION, A-GLAZING-MULLION</p></details><details><summary>LWPOLYLINE on A-GLAZING-MULLION</summary><pre>0
+LWPOLYLINE
+5
+1FF3A
+330
+70
+100
+AcDbEntity
+8
+A-GLAZING-MULLION
+6
+ByBlock
+100
+AcDbPolyline
+90
+        4
+70
+     1
+43
+0.0
+10
+5426.499975105136
+20
+1911.999998014653
+10
+5428.999975105115
+20
+1911.999999338237
+10
+5428.999969222466
+20
+1921.999999338237
+10
+5426.499969222437
+20
+1921.999998014595</pre></details></div></article><article class='feature-card'><div class='feature-meta'><span class='family-chip' style='--chip:#1b9e5a'>Curtain Walls</span><h3>Curtain wall, highest aspect</h3><p>area 25.0 | aspect 4.00 | vertices 4</p><p>layers: A-GLAZING MULLION</p><p>source entities: 4 | types: LINE:4</p></div><img src='dashboard_assets/curtain_walls_03.svg' alt='Curtain wall, highest aspect zoom'/><div class='feature-links'><a href='dashboard_assets/curtain_walls_03.svg'>SVG</a></div><div class='snippet-stack'><details><summary>Layer Provenance</summary><table><thead><tr><th>Raw Layer</th><th>Canonical</th><th>Kind</th><th>Count</th><th>Types</th></tr></thead><tbody><tr><td>A-GLAZING MULLION</td><td>A GLAZING MULLION</td><td>complementary</td><td>546</td><td>LINE:546</td></tr></tbody></table></details><details><summary>A GLAZING MULLION (complementary)</summary><p>Same broad region (97% overlap) but complementary entity types.</p><p>raw layers: A-GLAZING MULLION, A-GLAZING-MULLION</p></details><details><summary>LINE on A-GLAZING MULLION</summary><pre>0
+LINE
+5
+1748D
+330
+70
+100
+AcDbEntity
+8
+A-GLAZING MULLION
+6
+ByBlock
+62
+     7
+100
+AcDbLine
+10
+16.99999054739601
+20
+1703.3333392161
+30
+0.0
+11
+16.99998922381201
+21
+1705.833339216071
+31
+0.0</pre></details><details><summary>LINE on A-GLAZING MULLION</summary><pre>0
+LINE
+5
+1748E
+330
+70
+100
+AcDbEntity
+8
+A-GLAZING MULLION
+6
+ByBlock
+62
+     7
+100
+AcDbLine
+10
+16.99998922381201
+20
+1705.833339216071
+30
+0.0
+11
+6.999989223812008
+21
+1705.833333333489
+31
+0.0</pre></details></div></article>
+    </section>
+
+    <h2 class="section-title">Raw File Mix</h2>
+    <section class="two-col">
+      <div class="panel">
+        <h3>Entity Type Counts</h3>
+        <svg viewBox="0 0 520 260" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="260" rx="12" fill="#fbfbfd"/><text x="152" y="27.2" text-anchor="end" font-size="12" fill="#333">LINE</text><rect x="160" y="16.0" width="292.0" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="27.2" text-anchor="end" font-size="12" fill="#333">58,128</text><text x="152" y="50.8" text-anchor="end" font-size="12" fill="#333">LWPOLYLINE</text><rect x="160" y="39.6" width="17.1" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="50.8" text-anchor="end" font-size="12" fill="#333">3,408</text><text x="152" y="74.4" text-anchor="end" font-size="12" fill="#333">ELLIPSE</text><rect x="160" y="63.2" width="13.0" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="74.4" text-anchor="end" font-size="12" fill="#333">2,586</text><text x="152" y="98.0" text-anchor="end" font-size="12" fill="#333">HATCH</text><rect x="160" y="86.8" width="9.7" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="98.0" text-anchor="end" font-size="12" fill="#333">1,934</text><text x="152" y="121.6" text-anchor="end" font-size="12" fill="#333">ARC</text><rect x="160" y="110.4" width="7.5" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="121.6" text-anchor="end" font-size="12" fill="#333">1,501</text><text x="152" y="145.2" text-anchor="end" font-size="12" fill="#333">3DFACE</text><rect x="160" y="134.0" width="2.1" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="145.2" text-anchor="end" font-size="12" fill="#333">415</text><text x="152" y="168.8" text-anchor="end" font-size="12" fill="#333">CIRCLE</text><rect x="160" y="157.6" width="0.7" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="168.8" text-anchor="end" font-size="12" fill="#333">143</text><text x="152" y="192.4" text-anchor="end" font-size="12" fill="#333">SPLINE</text><rect x="160" y="181.2" width="0.4" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="192.4" text-anchor="end" font-size="12" fill="#333">70</text><text x="152" y="216.0" text-anchor="end" font-size="12" fill="#333">INSERT</text><rect x="160" y="204.8" width="0.3" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="216.0" text-anchor="end" font-size="12" fill="#333">67</text><text x="152" y="239.6" text-anchor="end" font-size="12" fill="#333">POINT</text><rect x="160" y="228.4" width="0.2" height="15.6" rx="6" fill="#384bff" fill-opacity="0.85"/><text x="514" y="239.6" text-anchor="end" font-size="12" fill="#333">40</text></svg>
+        <div class="note">The file is overwhelmingly line-driven. That matters because line-heavy wall layers force composition through endpoint closure instead of direct extraction.</div>
+      </div>
+      <div class="panel">
+        <h3>Top Layers</h3>
+        <svg viewBox="0 0 620 320" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="620" height="320" rx="12" fill="#fbfbfd"/><text x="194" y="28.0" text-anchor="end" font-size="12" fill="#333">GR_A-GLASS PANEL SUPPORT</text><rect x="202" y="16.0" width="350.0" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="28.0" text-anchor="end" font-size="12" fill="#333">17,200</text><text x="194" y="52.7" text-anchor="end" font-size="12" fill="#333">A-EXTERNAL WALL</text><rect x="202" y="40.7" width="202.1" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="52.7" text-anchor="end" font-size="12" fill="#333">9,934</text><text x="194" y="77.3" text-anchor="end" font-size="12" fill="#333">S-CONCRETE COLUMN</text><rect x="202" y="65.3" width="80.8" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="77.3" text-anchor="end" font-size="12" fill="#333">3,969</text><text x="194" y="102.0" text-anchor="end" font-size="12" fill="#333">A-WALL CONNECTION</text><rect x="202" y="90.0" width="74.5" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="102.0" text-anchor="end" font-size="12" fill="#333">3,663</text><text x="194" y="126.7" text-anchor="end" font-size="12" fill="#333">A-MEZZANINE WALL FULL</text><rect x="202" y="114.7" width="74.5" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="126.7" text-anchor="end" font-size="12" fill="#333">3,662</text><text x="194" y="151.3" text-anchor="end" font-size="12" fill="#333">A-WALL SILL</text><rect x="202" y="139.3" width="57.6" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="151.3" text-anchor="end" font-size="12" fill="#333">2,832</text><text x="194" y="176.0" text-anchor="end" font-size="12" fill="#333">S-CONCRETE WALL</text><rect x="202" y="164.0" width="55.3" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="176.0" text-anchor="end" font-size="12" fill="#333">2,719</text><text x="194" y="200.7" text-anchor="end" font-size="12" fill="#333">A-GLAZING FULL</text><rect x="202" y="188.7" width="49.2" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="200.7" text-anchor="end" font-size="12" fill="#333">2,420</text><text x="194" y="225.3" text-anchor="end" font-size="12" fill="#333">S-COLUMN PROTECTION</text><rect x="202" y="213.3" width="43.7" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="225.3" text-anchor="end" font-size="12" fill="#333">2,149</text><text x="194" y="250.0" text-anchor="end" font-size="12" fill="#333">A-ROOF PORCH</text><rect x="202" y="238.0" width="41.2" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="250.0" text-anchor="end" font-size="12" fill="#333">2,025</text><text x="194" y="274.7" text-anchor="end" font-size="12" fill="#333">A-GLAZING-FULL</text><rect x="202" y="262.7" width="40.7" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="274.7" text-anchor="end" font-size="12" fill="#333">1,999</text><text x="194" y="299.3" text-anchor="end" font-size="12" fill="#333">GR_A-SINGLE DOOR 1</text><rect x="202" y="287.3" width="36.0" height="16.7" rx="6" fill="#117a65" fill-opacity="0.85"/><text x="614" y="299.3" text-anchor="end" font-size="12" fill="#333">1,771</text></svg>
+        <div class="note">These are counts, not semantic certainty. Layer names act as class hints, not instance identity.</div>
+      </div>
+    </section>
+
+    <section class="two-col">
+      <div class="panel">
+        <h3>Top Entity Types Table</h3>
+        <table><thead><tr><th>Entity Type</th><th>Count</th></tr></thead><tbody><tr><td>LINE</td><td>58,128</td></tr><tr><td>LWPOLYLINE</td><td>3,408</td></tr><tr><td>ELLIPSE</td><td>2,586</td></tr><tr><td>HATCH</td><td>1,934</td></tr><tr><td>ARC</td><td>1,501</td></tr><tr><td>3DFACE</td><td>415</td></tr><tr><td>CIRCLE</td><td>143</td></tr><tr><td>SPLINE</td><td>70</td></tr><tr><td>INSERT</td><td>67</td></tr><tr><td>POINT</td><td>40</td></tr></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Top Layers Table</h3>
+        <table><thead><tr><th>Layer</th><th>Count</th></tr></thead><tbody><tr><td>GR_A-GLASS PANEL SUPPORT</td><td>17,200</td></tr><tr><td>A-EXTERNAL WALL</td><td>9,934</td></tr><tr><td>S-CONCRETE COLUMN</td><td>3,969</td></tr><tr><td>A-WALL CONNECTION</td><td>3,663</td></tr><tr><td>A-MEZZANINE WALL FULL</td><td>3,662</td></tr><tr><td>A-WALL SILL</td><td>2,832</td></tr><tr><td>S-CONCRETE WALL</td><td>2,719</td></tr><tr><td>A-GLAZING FULL</td><td>2,420</td></tr><tr><td>S-COLUMN PROTECTION</td><td>2,149</td></tr><tr><td>A-ROOF PORCH</td><td>2,025</td></tr><tr><td>A-GLAZING-FULL</td><td>1,999</td></tr><tr><td>GR_A-SINGLE DOOR 1</td><td>1,771</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <h2 class="section-title">Tokenization And Geometry</h2>
+    <section class="two-col">
+      <div class="panel">
+        <h3>Polygon Family Summary</h3>
+        <table><thead><tr><th>Family</th><th>Polygons</th><th>Median Area</th><th>P75 Area</th><th>Median Aspect</th><th>Max Aspect</th><th>Median Vertices</th></tr></thead><tbody><tr><td>Walls</td><td>274</td><td>1,480.3</td><td>10,302.8</td><td>1.07</td><td>112.50</td><td>4</td></tr><tr><td>Columns</td><td>572</td><td>695.6</td><td>988.0</td><td>1.00</td><td>7.67</td><td>4</td></tr><tr><td>Curtain Walls</td><td>304</td><td>25.0</td><td>30.0</td><td>2.83</td><td>4.00</td><td>4</td></tr></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Wall Snap Connectivity</h3>
+        <table><thead><tr><th>Tolerance</th><th>Nodes</th><th>Degree-1</th><th>Degree-2</th><th>Degree-3</th><th>Degree-4+</th></tr></thead><tbody><tr><td>0.1</td><td>20,357</td><td>7,425</td><td>9,780</td><td>1,196</td><td>1,956</td></tr><tr><td>0.25</td><td>17,143</td><td>6,707</td><td>7,471</td><td>833</td><td>2,132</td></tr><tr><td>0.5</td><td>15,039</td><td>5,427</td><td>7,338</td><td>662</td><td>1,612</td></tr><tr><td>1.0</td><td>13,201</td><td>4,302</td><td>6,838</td><td>708</td><td>1,353</td></tr></tbody></table>
+        <p class="note">The degree-4+ junction load is the tell. Once snapping is applied, walls become a high-branching graph rather than a simple rectangle list.</p>
+      </div>
+    </section>
+
+    <section class="chart-grid">
+      <div class='chart-card'><h3>Walls: log10(area+1)</h3><svg viewBox="0 0 520 230" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="230" rx="12" fill="#fbfbfd"/><rect x="38.0" y="134.6" width="34.8" height="37.4" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="55.4" y="206" text-anchor="end" transform="rotate(-45 55.4,206)" font-size="9" fill="#444">1.4-1.7</text><text x="55.4" y="130.6" text-anchor="middle" font-size="10" fill="#444">17</text><rect x="76.8" y="154.4" width="34.8" height="17.6" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="94.3" y="206" text-anchor="end" transform="rotate(-45 94.3,206)" font-size="9" fill="#444">1.7-2.1</text><text x="94.3" y="150.4" text-anchor="middle" font-size="10" fill="#444">8</text><rect x="115.7" y="141.2" width="34.8" height="30.8" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="133.1" y="206" text-anchor="end" transform="rotate(-45 133.1,206)" font-size="9" fill="#444">2.1-2.4</text><text x="133.1" y="137.2" text-anchor="middle" font-size="10" fill="#444">14</text><rect x="154.5" y="139.0" width="34.8" height="33.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="171.9" y="206" text-anchor="end" transform="rotate(-45 171.9,206)" font-size="9" fill="#444">2.4-2.8</text><text x="171.9" y="135.0" text-anchor="middle" font-size="10" fill="#444">15</text><rect x="193.3" y="18.0" width="34.8" height="154.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="210.8" y="206" text-anchor="end" transform="rotate(-45 210.8,206)" font-size="9" fill="#444">2.8-3.1</text><text x="210.8" y="14.0" text-anchor="middle" font-size="10" fill="#444">70</text><rect x="232.2" y="77.4" width="34.8" height="94.6" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="249.6" y="206" text-anchor="end" transform="rotate(-45 249.6,206)" font-size="9" fill="#444">3.1-3.5</text><text x="249.6" y="73.4" text-anchor="middle" font-size="10" fill="#444">43</text><rect x="271.0" y="121.4" width="34.8" height="50.6" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="288.4" y="206" text-anchor="end" transform="rotate(-45 288.4,206)" font-size="9" fill="#444">3.5-3.8</text><text x="288.4" y="117.4" text-anchor="middle" font-size="10" fill="#444">23</text><rect x="309.8" y="103.8" width="34.8" height="68.2" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="327.3" y="206" text-anchor="end" transform="rotate(-45 327.3,206)" font-size="9" fill="#444">3.8-4.2</text><text x="327.3" y="99.8" text-anchor="middle" font-size="10" fill="#444">31</text><rect x="348.7" y="106.0" width="34.8" height="66.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="366.1" y="206" text-anchor="end" transform="rotate(-45 366.1,206)" font-size="9" fill="#444">4.2-4.5</text><text x="366.1" y="102.0" text-anchor="middle" font-size="10" fill="#444">30</text><rect x="387.5" y="141.2" width="34.8" height="30.8" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="404.9" y="206" text-anchor="end" transform="rotate(-45 404.9,206)" font-size="9" fill="#444">4.5-4.9</text><text x="404.9" y="137.2" text-anchor="middle" font-size="10" fill="#444">14</text><rect x="426.3" y="156.6" width="34.8" height="15.4" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="443.8" y="206" text-anchor="end" transform="rotate(-45 443.8,206)" font-size="9" fill="#444">4.9-5.2</text><text x="443.8" y="152.6" text-anchor="middle" font-size="10" fill="#444">7</text><rect x="465.2" y="167.6" width="34.8" height="4.4" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="482.6" y="206" text-anchor="end" transform="rotate(-45 482.6,206)" font-size="9" fill="#444">5.2-5.6</text><text x="482.6" y="163.6" text-anchor="middle" font-size="10" fill="#444">2</text></svg></div><div class='chart-card'><h3>Columns: log10(area+1)</h3><svg viewBox="0 0 520 230" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="230" rx="12" fill="#fbfbfd"/><rect x="38.0" y="139.1" width="34.8" height="32.9" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="55.4" y="206" text-anchor="end" transform="rotate(-45 55.4,206)" font-size="9" fill="#444">1.1-1.2</text><text x="55.4" y="135.1" text-anchor="middle" font-size="10" fill="#444">35</text><rect x="76.8" y="155.1" width="34.8" height="16.9" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="94.3" y="206" text-anchor="end" transform="rotate(-45 94.3,206)" font-size="9" fill="#444">1.2-1.4</text><text x="94.3" y="151.1" text-anchor="middle" font-size="10" fill="#444">18</text><rect x="115.7" y="165.4" width="34.8" height="6.6" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="133.1" y="206" text-anchor="end" transform="rotate(-45 133.1,206)" font-size="9" fill="#444">1.4-1.6</text><text x="133.1" y="161.4" text-anchor="middle" font-size="10" fill="#444">7</text><rect x="154.5" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="171.9" y="206" text-anchor="end" transform="rotate(-45 171.9,206)" font-size="9" fill="#444">1.6-1.8</text><text x="171.9" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="193.3" y="170.1" width="34.8" height="1.9" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="210.8" y="206" text-anchor="end" transform="rotate(-45 210.8,206)" font-size="9" fill="#444">1.8-2.0</text><text x="210.8" y="166.1" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="232.2" y="170.1" width="34.8" height="1.9" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="249.6" y="206" text-anchor="end" transform="rotate(-45 249.6,206)" font-size="9" fill="#444">2.0-2.2</text><text x="249.6" y="166.1" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="271.0" y="120.4" width="34.8" height="51.6" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="288.4" y="206" text-anchor="end" transform="rotate(-45 288.4,206)" font-size="9" fill="#444">2.2-2.4</text><text x="288.4" y="116.4" text-anchor="middle" font-size="10" fill="#444">55</text><rect x="309.8" y="80.0" width="34.8" height="92.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="327.3" y="206" text-anchor="end" transform="rotate(-45 327.3,206)" font-size="9" fill="#444">2.4-2.6</text><text x="327.3" y="76.0" text-anchor="middle" font-size="10" fill="#444">98</text><rect x="348.7" y="119.4" width="34.8" height="52.6" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="366.1" y="206" text-anchor="end" transform="rotate(-45 366.1,206)" font-size="9" fill="#444">2.6-2.8</text><text x="366.1" y="115.4" text-anchor="middle" font-size="10" fill="#444">56</text><rect x="387.5" y="18.0" width="34.8" height="154.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="404.9" y="206" text-anchor="end" transform="rotate(-45 404.9,206)" font-size="9" fill="#444">2.8-3.0</text><text x="404.9" y="14.0" text-anchor="middle" font-size="10" fill="#444">164</text><rect x="426.3" y="68.7" width="34.8" height="103.3" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="443.8" y="206" text-anchor="end" transform="rotate(-45 443.8,206)" font-size="9" fill="#444">3.0-3.2</text><text x="443.8" y="64.7" text-anchor="middle" font-size="10" fill="#444">110</text><rect x="465.2" y="148.5" width="34.8" height="23.5" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="482.6" y="206" text-anchor="end" transform="rotate(-45 482.6,206)" font-size="9" fill="#444">3.2-3.4</text><text x="482.6" y="144.5" text-anchor="middle" font-size="10" fill="#444">25</text></svg></div><div class='chart-card'><h3>Curtain Walls: log10(area+1)</h3><svg viewBox="0 0 520 230" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="230" rx="12" fill="#fbfbfd"/><rect x="38.0" y="166.2" width="34.8" height="5.8" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="55.4" y="206" text-anchor="end" transform="rotate(-45 55.4,206)" font-size="9" fill="#444">0.8-1.0</text><text x="55.4" y="162.2" text-anchor="middle" font-size="10" fill="#444">9</text><rect x="76.8" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="94.3" y="206" text-anchor="end" transform="rotate(-45 94.3,206)" font-size="9" fill="#444">1.0-1.2</text><text x="94.3" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="115.7" y="170.7" width="34.8" height="1.3" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="133.1" y="206" text-anchor="end" transform="rotate(-45 133.1,206)" font-size="9" fill="#444">1.2-1.3</text><text x="133.1" y="166.7" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="154.5" y="18.0" width="34.8" height="154.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="171.9" y="206" text-anchor="end" transform="rotate(-45 171.9,206)" font-size="9" fill="#444">1.3-1.5</text><text x="171.9" y="14.0" text-anchor="middle" font-size="10" fill="#444">237</text><rect x="193.3" y="138.2" width="34.8" height="33.8" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="210.8" y="206" text-anchor="end" transform="rotate(-45 210.8,206)" font-size="9" fill="#444">1.5-1.7</text><text x="210.8" y="134.2" text-anchor="middle" font-size="10" fill="#444">52</text><rect x="232.2" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="249.6" y="206" text-anchor="end" transform="rotate(-45 249.6,206)" font-size="9" fill="#444">1.7-1.9</text><text x="249.6" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="271.0" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="288.4" y="206" text-anchor="end" transform="rotate(-45 288.4,206)" font-size="9" fill="#444">1.9-2.1</text><text x="288.4" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="309.8" y="171.4" width="34.8" height="0.6" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="327.3" y="206" text-anchor="end" transform="rotate(-45 327.3,206)" font-size="9" fill="#444">2.1-2.3</text><text x="327.3" y="167.4" text-anchor="middle" font-size="10" fill="#444">1</text><rect x="348.7" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="366.1" y="206" text-anchor="end" transform="rotate(-45 366.1,206)" font-size="9" fill="#444">2.3-2.4</text><text x="366.1" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="387.5" y="170.7" width="34.8" height="1.3" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="404.9" y="206" text-anchor="end" transform="rotate(-45 404.9,206)" font-size="9" fill="#444">2.4-2.6</text><text x="404.9" y="166.7" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="426.3" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="443.8" y="206" text-anchor="end" transform="rotate(-45 443.8,206)" font-size="9" fill="#444">2.6-2.8</text><text x="443.8" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="465.2" y="171.4" width="34.8" height="0.6" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="482.6" y="206" text-anchor="end" transform="rotate(-45 482.6,206)" font-size="9" fill="#444">2.8-3.0</text><text x="482.6" y="167.4" text-anchor="middle" font-size="10" fill="#444">1</text></svg></div>
+    </section>
+    <section class="chart-grid">
+      <div class='chart-card'><h3>Walls: aspect ratio</h3><svg viewBox="0 0 520 230" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="230" rx="12" fill="#fbfbfd"/><rect x="38.0" y="18.0" width="34.8" height="154.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="55.4" y="206" text-anchor="end" transform="rotate(-45 55.4,206)" font-size="9" fill="#444">1.0-10.3</text><text x="55.4" y="14.0" text-anchor="middle" font-size="10" fill="#444">256</text><rect x="76.8" y="166.6" width="34.8" height="5.4" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="94.3" y="206" text-anchor="end" transform="rotate(-45 94.3,206)" font-size="9" fill="#444">10.3-19.6</text><text x="94.3" y="162.6" text-anchor="middle" font-size="10" fill="#444">9</text><rect x="115.7" y="170.8" width="34.8" height="1.2" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="133.1" y="206" text-anchor="end" transform="rotate(-45 133.1,206)" font-size="9" fill="#444">19.6-28.9</text><text x="133.1" y="166.8" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="154.5" y="170.8" width="34.8" height="1.2" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="171.9" y="206" text-anchor="end" transform="rotate(-45 171.9,206)" font-size="9" fill="#444">28.9-38.2</text><text x="171.9" y="166.8" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="193.3" y="171.4" width="34.8" height="0.6" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="210.8" y="206" text-anchor="end" transform="rotate(-45 210.8,206)" font-size="9" fill="#444">38.2-47.5</text><text x="210.8" y="167.4" text-anchor="middle" font-size="10" fill="#444">1</text><rect x="232.2" y="170.2" width="34.8" height="1.8" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="249.6" y="206" text-anchor="end" transform="rotate(-45 249.6,206)" font-size="9" fill="#444">47.5-56.7</text><text x="249.6" y="166.2" text-anchor="middle" font-size="10" fill="#444">3</text><rect x="271.0" y="172.0" width="34.8" height="0.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="288.4" y="206" text-anchor="end" transform="rotate(-45 288.4,206)" font-size="9" fill="#444">56.8-66.0</text><text x="288.4" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="309.8" y="172.0" width="34.8" height="0.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="327.3" y="206" text-anchor="end" transform="rotate(-45 327.3,206)" font-size="9" fill="#444">66.0-75.3</text><text x="327.3" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="348.7" y="172.0" width="34.8" height="0.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="366.1" y="206" text-anchor="end" transform="rotate(-45 366.1,206)" font-size="9" fill="#444">75.3-84.6</text><text x="366.1" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="387.5" y="172.0" width="34.8" height="0.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="404.9" y="206" text-anchor="end" transform="rotate(-45 404.9,206)" font-size="9" fill="#444">84.6-93.9</text><text x="404.9" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="426.3" y="172.0" width="34.8" height="0.0" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="443.8" y="206" text-anchor="end" transform="rotate(-45 443.8,206)" font-size="9" fill="#444">93.9-103.2</text><text x="443.8" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="465.2" y="171.4" width="34.8" height="0.6" rx="4" fill="#2f5bff" fill-opacity="0.82"/><text x="482.6" y="206" text-anchor="end" transform="rotate(-45 482.6,206)" font-size="9" fill="#444">103.2-112.5</text><text x="482.6" y="167.4" text-anchor="middle" font-size="10" fill="#444">1</text></svg></div><div class='chart-card'><h3>Columns: aspect ratio</h3><svg viewBox="0 0 520 230" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="230" rx="12" fill="#fbfbfd"/><rect x="38.0" y="18.0" width="34.8" height="154.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="55.4" y="206" text-anchor="end" transform="rotate(-45 55.4,206)" font-size="9" fill="#444">1.0-1.6</text><text x="55.4" y="14.0" text-anchor="middle" font-size="10" fill="#444">542</text><rect x="76.8" y="166.0" width="34.8" height="6.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="94.3" y="206" text-anchor="end" transform="rotate(-45 94.3,206)" font-size="9" fill="#444">1.6-2.1</text><text x="94.3" y="162.0" text-anchor="middle" font-size="10" fill="#444">21</text><rect x="115.7" y="170.6" width="34.8" height="1.4" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="133.1" y="206" text-anchor="end" transform="rotate(-45 133.1,206)" font-size="9" fill="#444">2.1-2.7</text><text x="133.1" y="166.6" text-anchor="middle" font-size="10" fill="#444">5</text><rect x="154.5" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="171.9" y="206" text-anchor="end" transform="rotate(-45 171.9,206)" font-size="9" fill="#444">2.7-3.2</text><text x="171.9" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="193.3" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="210.8" y="206" text-anchor="end" transform="rotate(-45 210.8,206)" font-size="9" fill="#444">3.2-3.8</text><text x="210.8" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="232.2" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="249.6" y="206" text-anchor="end" transform="rotate(-45 249.6,206)" font-size="9" fill="#444">3.8-4.3</text><text x="249.6" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="271.0" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="288.4" y="206" text-anchor="end" transform="rotate(-45 288.4,206)" font-size="9" fill="#444">4.3-4.9</text><text x="288.4" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="309.8" y="171.4" width="34.8" height="0.6" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="327.3" y="206" text-anchor="end" transform="rotate(-45 327.3,206)" font-size="9" fill="#444">4.9-5.4</text><text x="327.3" y="167.4" text-anchor="middle" font-size="10" fill="#444">2</text><rect x="348.7" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="366.1" y="206" text-anchor="end" transform="rotate(-45 366.1,206)" font-size="9" fill="#444">5.4-6.0</text><text x="366.1" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="387.5" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="404.9" y="206" text-anchor="end" transform="rotate(-45 404.9,206)" font-size="9" fill="#444">6.0-6.6</text><text x="404.9" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="426.3" y="172.0" width="34.8" height="0.0" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="443.8" y="206" text-anchor="end" transform="rotate(-45 443.8,206)" font-size="9" fill="#444">6.6-7.1</text><text x="443.8" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="465.2" y="171.4" width="34.8" height="0.6" rx="4" fill="#d9342b" fill-opacity="0.82"/><text x="482.6" y="206" text-anchor="end" transform="rotate(-45 482.6,206)" font-size="9" fill="#444">7.1-7.7</text><text x="482.6" y="167.4" text-anchor="middle" font-size="10" fill="#444">2</text></svg></div><div class='chart-card'><h3>Curtain Walls: aspect ratio</h3><svg viewBox="0 0 520 230" class="chart-svg" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="520" height="230" rx="12" fill="#fbfbfd"/><rect x="38.0" y="111.4" width="34.8" height="60.6" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="55.4" y="206" text-anchor="end" transform="rotate(-45 55.4,206)" font-size="9" fill="#444">1.1-1.3</text><text x="55.4" y="107.4" text-anchor="middle" font-size="10" fill="#444">59</text><rect x="76.8" y="161.7" width="34.8" height="10.3" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="94.3" y="206" text-anchor="end" transform="rotate(-45 94.3,206)" font-size="9" fill="#444">1.3-1.5</text><text x="94.3" y="157.7" text-anchor="middle" font-size="10" fill="#444">10</text><rect x="115.7" y="136.1" width="34.8" height="35.9" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="133.1" y="206" text-anchor="end" transform="rotate(-45 133.1,206)" font-size="9" fill="#444">1.5-1.8</text><text x="133.1" y="132.1" text-anchor="middle" font-size="10" fill="#444">35</text><rect x="154.5" y="171.0" width="34.8" height="1.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="171.9" y="206" text-anchor="end" transform="rotate(-45 171.9,206)" font-size="9" fill="#444">1.8-2.0</text><text x="171.9" y="167.0" text-anchor="middle" font-size="10" fill="#444">1</text><rect x="193.3" y="138.1" width="34.8" height="33.9" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="210.8" y="206" text-anchor="end" transform="rotate(-45 210.8,206)" font-size="9" fill="#444">2.0-2.3</text><text x="210.8" y="134.1" text-anchor="middle" font-size="10" fill="#444">33</text><rect x="232.2" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="249.6" y="206" text-anchor="end" transform="rotate(-45 249.6,206)" font-size="9" fill="#444">2.3-2.5</text><text x="249.6" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="271.0" y="157.6" width="34.8" height="14.4" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="288.4" y="206" text-anchor="end" transform="rotate(-45 288.4,206)" font-size="9" fill="#444">2.5-2.8</text><text x="288.4" y="153.6" text-anchor="middle" font-size="10" fill="#444">14</text><rect x="309.8" y="171.0" width="34.8" height="1.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="327.3" y="206" text-anchor="end" transform="rotate(-45 327.3,206)" font-size="9" fill="#444">2.8-3.0</text><text x="327.3" y="167.0" text-anchor="middle" font-size="10" fill="#444">1</text><rect x="348.7" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="366.1" y="206" text-anchor="end" transform="rotate(-45 366.1,206)" font-size="9" fill="#444">3.0-3.3</text><text x="366.1" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="387.5" y="172.0" width="34.8" height="0.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="404.9" y="206" text-anchor="end" transform="rotate(-45 404.9,206)" font-size="9" fill="#444">3.3-3.5</text><text x="404.9" y="168.0" text-anchor="middle" font-size="10" fill="#444">0</text><rect x="426.3" y="171.0" width="34.8" height="1.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="443.8" y="206" text-anchor="end" transform="rotate(-45 443.8,206)" font-size="9" fill="#444">3.5-3.8</text><text x="443.8" y="167.0" text-anchor="middle" font-size="10" fill="#444">1</text><rect x="465.2" y="18.0" width="34.8" height="154.0" rx="4" fill="#1b9e5a" fill-opacity="0.82"/><text x="482.6" y="206" text-anchor="end" transform="rotate(-45 482.6,206)" font-size="9" fill="#444">3.8-4.0</text><text x="482.6" y="14.0" text-anchor="middle" font-size="10" fill="#444">150</text></svg></div>
+    </section>
+
+    <h2 class="section-title">Scoped Layer Structure</h2>
+    <section class="panel">
+      <h3>Target Layer / Primitive Mix</h3>
+      <table><thead><tr><th>Layer</th><th>Observed Primitive Types</th></tr></thead><tbody><tr><td>A-EXTERNAL GLASS</td><td>INSERT:1</td></tr><tr><td>A-EXTERNAL WALL</td><td>ARC:345, CIRCLE:42, ELLIPSE:313, INSERT:4</td></tr><tr><td>A-GLAZING ARRAY</td><td>LINE:35</td></tr><tr><td>A-GLAZING FULL</td><td>INSERT:23, LINE:2299, LWPOLYLINE:98</td></tr><tr><td>A-GLAZING INTERNAL</td><td>LINE:43</td></tr><tr><td>A-GLAZING MULLION</td><td>LINE:546</td></tr><tr><td>A-GLAZING SILL</td><td>LINE:242</td></tr><tr><td>A-GLAZING-FULL</td><td>LINE:1999</td></tr><tr><td>A-GLAZING-MULLION</td><td>LWPOLYLINE:587</td></tr><tr><td>A-INTERNAL GLASS</td><td>LINE:1</td></tr><tr><td>A-MEZZANINE WALL FINISH</td><td>LWPOLYLINE:2</td></tr><tr><td>A-MEZZANINE WALL FULL</td><td>3DFACE:13, ARC:139, ELLIPSE:1, LINE:2275</td></tr><tr><td>A-PARTITION WALL</td><td>3DFACE:137, LINE:79</td></tr><tr><td>A-WALL 1</td><td>3DFACE:1, LINE:46</td></tr><tr><td>A-WALL 2</td><td>ARC:31, LINE:91, LWPOLYLINE:180</td></tr><tr><td>A-WALL NICHE</td><td>LINE:4</td></tr><tr><td>A-WALL PANEL</td><td>HATCH:4, LINE:22</td></tr><tr><td>A-WALL PARAPET</td><td>LINE:8</td></tr></tbody></table>
+    </section>
+
+    <section class="two-col">
+      <div class="panel">
+        <h3>Raw Layer Provenance</h3>
+        <table><thead><tr><th>Raw Layer</th><th>Canonical Layer</th><th>Family</th><th>Count</th><th>Types</th><th>Group Kind</th></tr></thead><tbody><tr><td>A-EXTERNAL WALL</td><td>A EXTERNAL WALL</td><td>Walls</td><td>9,934</td><td>ARC:345, CIRCLE:42, ELLIPSE:313, INSERT:4</td><td>single</td></tr><tr><td>S-CONCRETE COLUMN</td><td>S CONCRETE COLUMN</td><td>Columns</td><td>3,969</td><td>CIRCLE:34, LINE:3458, LWPOLYLINE:477</td><td>single</td></tr><tr><td>A-MEZZANINE WALL FULL</td><td>A MEZZANINE WALL FULL</td><td>Walls</td><td>3,662</td><td>3DFACE:13, ARC:139, ELLIPSE:1, LINE:2275</td><td>single</td></tr><tr><td>A-WALL SILL</td><td>A WALL SILL</td><td>Curtain Walls</td><td>2,832</td><td>LINE:2831, LWPOLYLINE:1</td><td>single</td></tr><tr><td>S-CONCRETE WALL</td><td>S CONCRETE WALL</td><td>Walls</td><td>2,719</td><td>LINE:2719</td><td>single</td></tr><tr><td>A-GLAZING FULL</td><td>A GLAZING FULL</td><td>Curtain Walls</td><td>2,420</td><td>INSERT:23, LINE:2299, LWPOLYLINE:98</td><td>related</td></tr><tr><td>S-COLUMN PROTECTION</td><td>S COLUMN PROTECTION</td><td>Columns</td><td>2,149</td><td>ARC:24, LINE:1722, LWPOLYLINE:403</td><td>single</td></tr><tr><td>A-GLAZING-FULL</td><td>A GLAZING FULL</td><td>Curtain Walls</td><td>1,999</td><td>LINE:1999</td><td>related</td></tr><tr><td>S-COLUMN</td><td>S COLUMN</td><td>Columns</td><td>1,263</td><td>CIRCLE:1, ELLIPSE:8, LINE:916, LWPOLYLINE:338</td><td>single</td></tr><tr><td>S-STEEL COLUMN</td><td>S STEEL COLUMN</td><td>Columns</td><td>923</td><td>ARC:124, ELLIPSE:72, LINE:707, LWPOLYLINE:18</td><td>single</td></tr><tr><td>S-STEEL POST</td><td>S STEEL POST</td><td>Columns</td><td>904</td><td>ELLIPSE:424, LINE:480</td><td>single</td></tr><tr><td>A-GLAZING-MULLION</td><td>A GLAZING MULLION</td><td>Curtain Walls</td><td>587</td><td>LWPOLYLINE:587</td><td>complementary</td></tr><tr><td>A-GLAZING MULLION</td><td>A GLAZING MULLION</td><td>Curtain Walls</td><td>546</td><td>LINE:546</td><td>complementary</td></tr><tr><td>A-WALL 2</td><td>A WALL 2</td><td>Walls</td><td>302</td><td>ARC:31, LINE:91, LWPOLYLINE:180</td><td>single</td></tr><tr><td>A-GLAZING SILL</td><td>A GLAZING SILL</td><td>Curtain Walls</td><td>242</td><td>LINE:242</td><td>single</td></tr><tr><td>A-PARTITION WALL</td><td>A PARTITION WALL</td><td>Walls</td><td>216</td><td>3DFACE:137, LINE:79</td><td>single</td></tr><tr><td>A-WALL 1</td><td>A WALL 1</td><td>Walls</td><td>47</td><td>3DFACE:1, LINE:46</td><td>single</td></tr><tr><td>A-GLAZING INTERNAL</td><td>A GLAZING INTERNAL</td><td>Curtain Walls</td><td>43</td><td>LINE:43</td><td>single</td></tr><tr><td>A-GLAZING ARRAY</td><td>A GLAZING ARRAY</td><td>Curtain Walls</td><td>35</td><td>LINE:35</td><td>single</td></tr><tr><td>A-WALL PANEL</td><td>A WALL PANEL</td><td>Walls</td><td>26</td><td>HATCH:4, LINE:22</td><td>single</td></tr><tr><td>A-WALL PARAPET</td><td>A WALL PARAPET</td><td>Walls</td><td>8</td><td>LINE:8</td><td>single</td></tr><tr><td>A-WALL NICHE</td><td>A WALL NICHE</td><td>Walls</td><td>4</td><td>LINE:4</td><td>single</td></tr><tr><td>A-MEZZANINE WALL FINISH</td><td>A MEZZANINE WALL FINISH</td><td>Walls</td><td>2</td><td>LWPOLYLINE:2</td><td>single</td></tr><tr><td>A-EXTERNAL GLASS</td><td>A EXTERNAL GLASS</td><td>Curtain Walls</td><td>1</td><td>INSERT:1</td><td>single</td></tr><tr><td>A-INTERNAL GLASS</td><td>A INTERNAL GLASS</td><td>Curtain Walls</td><td>1</td><td>LINE:1</td><td>single</td></tr></tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Canonical Variant Groups</h3>
+        <table><thead><tr><th>Family</th><th>Canonical Layer</th><th>Raw Layers</th><th>Kind</th><th>Note</th></tr></thead><tbody><tr><td>Curtain Walls</td><td>A GLAZING FULL</td><td>A-GLAZING FULL, A-GLAZING-FULL</td><td>related</td><td>Canonical variants with 0% overlap and shared types [&#x27;LINE&#x27;].</td></tr><tr><td>Curtain Walls</td><td>A GLAZING MULLION</td><td>A-GLAZING MULLION, A-GLAZING-MULLION</td><td>complementary</td><td>Same broad region (97% overlap) but complementary entity types.</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <h2 class="section-title">Linked Artifacts</h2>
+    <section class="panel">
+      <h3>Open The Generated Files</h3>
+      <ul class="file-list">
+        <li><a href='extracted_overlay.svg'>Overlay</a></li><li><a href='walls.svg'>Walls</a></li><li><a href='columns.svg'>Columns</a></li><li><a href='curtain_walls.svg'>Curtain Walls</a></li><li><a href='analysis_report.md'>Analysis Report</a></li><li><a href='tokenization_output.json'>Tokenization JSON</a></li>
+      </ul>
+      <p class="note">Dashboard feature images live under <code>dashboard_assets/</code>. The SVGs are the source assets for feature zooms and provenance inspection.</p>
+    </section>
+  </main>
+</body>
+</html>

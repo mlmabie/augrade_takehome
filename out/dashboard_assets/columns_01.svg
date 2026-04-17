@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="620" viewBox="0 0 620 620">
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<polyline fill="none" stroke="#d9342b" stroke-opacity="0.22" stroke-width="1" points="310.01,278.95 278.95,309.99 309.99,341.05 341.05,310.01 310.01,278.95"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="321.42,307.60 928.53,915.01"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="557.07,-31.26 695.34,107.09 406.92,395.36 418.00,406.46 706.43,118.18"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="999.75,158.73 1343.64,-184.99 1048.71,-480.07 589.45,-21.04 985.84,375.55 1101.21,260.23 999.75,158.73 1216.05,-57.46"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="312.54,316.47 919.65,923.88 928.53,915.01 321.42,307.60 312.54,316.47"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="289.87,276.04 280.99,284.91 -113.73,-110.01 -104.86,-118.88 289.87,276.04"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="2781.94,-921.37 2772.49,-944.38 2781.94,-921.37 2352.11,-491.04 2381.37,-461.76 939.57,979.32 -131.59,-92.38 -128.26,-95.71 -164.11,-131.57"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="2780.71,-654.23 2768.48,-683.73 2656.69,-637.42 967.99,1050.61 -189.73,-105.96"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="3242.36,-1073.03 3183.68,-1214.73 3198.17,-1220.73 3256.85,-1079.03 2823.14,-899.37 2721.37,-797.48 2762.48,-698.22 2647.81,-650.72 967.04,1029.39 -178.74,-116.94"/>
+<polyline fill="none" stroke="#2f5bff" stroke-opacity="0.22" stroke-width="1" points="166.46,-422.06 695.34,107.09 406.92,395.36"/>
+<polygon fill="#d9342b" fill-opacity="0.08" stroke="#d9342b" stroke-opacity="0.25" stroke-width="1" points="341.05,310.01 309.99,341.05 278.95,309.99 310.01,278.95 341.05,310.01"/>
+<polygon fill="#2f5bff" fill-opacity="0.08" stroke="#2f5bff" stroke-opacity="0.25" stroke-width="1" points="321.42,307.60 928.53,915.01 919.65,923.88 312.54,316.47 321.42,307.60"/>
+<polygon fill="#2f5bff" fill-opacity="0.08" stroke="#2f5bff" stroke-opacity="0.25" stroke-width="1" points="289.87,276.04 280.99,284.91 -113.73,-110.01 -104.86,-118.88 289.87,276.04"/>
+<polygon fill="#d9342b" fill-opacity="0.20" stroke="#d9342b" stroke-width="2.2" points="341.05,310.01 309.99,341.05 278.95,309.99 310.01,278.95 341.05,310.01"/>
+</svg>

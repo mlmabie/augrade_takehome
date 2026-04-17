@@ -1,0 +1,201 @@
+{
+  "runtime_seconds": 1.4485549926757812,
+  "entity_type_counts": {
+    "LINE": 58128,
+    "LWPOLYLINE": 3408,
+    "ELLIPSE": 2586,
+    "HATCH": 1934,
+    "ARC": 1501,
+    "3DFACE": 415,
+    "CIRCLE": 143,
+    "SPLINE": 70,
+    "INSERT": 67,
+    "POINT": 40,
+    "POLYLINE": 5
+  },
+  "top_layers": {
+    "GR_A-GLASS PANEL SUPPORT": 17200,
+    "A-EXTERNAL WALL": 9934,
+    "S-CONCRETE COLUMN": 3969,
+    "A-WALL CONNECTION": 3663,
+    "A-MEZZANINE WALL FULL": 3662,
+    "A-WALL SILL": 2832,
+    "S-CONCRETE WALL": 2719,
+    "A-GLAZING FULL": 2420,
+    "S-COLUMN PROTECTION": 2149,
+    "A-ROOF PORCH": 2025,
+    "A-GLAZING-FULL": 1999,
+    "GR_A-SINGLE DOOR 1": 1771,
+    "GR_A-SINGLE DOOR 2": 1461,
+    "A-MEZZANINE WALL FULL HATCH": 1301,
+    "S-COLUMN": 1263,
+    "S-STEEL COLUMN": 923,
+    "S-STEEL POST": 904,
+    "GR_A-WINDOW 1": 797,
+    "A-STAIR": 637,
+    "A-GLAZING-MULLION": 587,
+    "A-GLAZING MULLION": 546,
+    "S-COLUMN HATCH": 456,
+    "A-STAIR RAILING": 453,
+    "S-JOINT": 334,
+    "A-WALL 2": 302
+  },
+  "family_entity_counts": {
+    "walls": 16920,
+    "columns": 9208,
+    "curtain_walls": 8706
+  },
+  "target_layer_type_counts": {
+    "A-EXTERNAL GLASS": {
+      "INSERT": 1
+    },
+    "A-EXTERNAL WALL": {
+      "ARC": 345,
+      "CIRCLE": 42,
+      "ELLIPSE": 313,
+      "INSERT": 4,
+      "LINE": 9189,
+      "LWPOLYLINE": 1,
+      "POINT": 40
+    },
+    "A-GLAZING ARRAY": {
+      "LINE": 35
+    },
+    "A-GLAZING FULL": {
+      "INSERT": 23,
+      "LINE": 2299,
+      "LWPOLYLINE": 98
+    },
+    "A-GLAZING INTERNAL": {
+      "LINE": 43
+    },
+    "A-GLAZING MULLION": {
+      "LINE": 546
+    },
+    "A-GLAZING SILL": {
+      "LINE": 242
+    },
+    "A-GLAZING-FULL": {
+      "LINE": 1999
+    },
+    "A-GLAZING-MULLION": {
+      "LWPOLYLINE": 587
+    },
+    "A-INTERNAL GLASS": {
+      "LINE": 1
+    },
+    "A-MEZZANINE WALL FINISH": {
+      "LWPOLYLINE": 2
+    },
+    "A-MEZZANINE WALL FULL": {
+      "3DFACE": 13,
+      "ARC": 139,
+      "ELLIPSE": 1,
+      "LINE": 2275,
+      "LWPOLYLINE": 1234
+    },
+    "A-PARTITION WALL": {
+      "3DFACE": 137,
+      "LINE": 79
+    },
+    "A-WALL 1": {
+      "3DFACE": 1,
+      "LINE": 46
+    },
+    "A-WALL 2": {
+      "ARC": 31,
+      "LINE": 91,
+      "LWPOLYLINE": 180
+    },
+    "A-WALL NICHE": {
+      "LINE": 4
+    },
+    "A-WALL PANEL": {
+      "HATCH": 4,
+      "LINE": 22
+    },
+    "A-WALL PARAPET": {
+      "LINE": 8
+    },
+    "A-WALL SILL": {
+      "LINE": 2831,
+      "LWPOLYLINE": 1
+    },
+    "S-COLUMN": {
+      "CIRCLE": 1,
+      "ELLIPSE": 8,
+      "LINE": 916,
+      "LWPOLYLINE": 338
+    },
+    "S-COLUMN PROTECTION": {
+      "ARC": 24,
+      "LINE": 1722,
+      "LWPOLYLINE": 403
+    },
+    "S-CONCRETE COLUMN": {
+      "CIRCLE": 34,
+      "LINE": 3458,
+      "LWPOLYLINE": 477
+    },
+    "S-CONCRETE WALL": {
+      "LINE": 2719
+    },
+    "S-STEEL COLUMN": {
+      "ARC": 124,
+      "ELLIPSE": 72,
+      "LINE": 707,
+      "LWPOLYLINE": 18,
+      "POLYLINE": 2
+    },
+    "S-STEEL POST": {
+      "ELLIPSE": 424,
+      "LINE": 480
+    }
+  },
+  "polygon_counts": {
+    "walls": 274,
+    "columns": 572,
+    "curtain_walls": 304
+  },
+  "graph_vs_direct_counts": {
+    "direct": 699,
+    "graph_face": 451
+  },
+  "target_primitive_totals": {
+    "count": 34834,
+    "length_total": 1144751.426,
+    "count_consumed": 2980,
+    "length_consumed": 228196.808,
+    "length_coverage_estimate": 0.1993
+  },
+  "wall_snap_stats": {
+    "0.1": {
+      "nodes": 20357,
+      "degree_1": 7425,
+      "degree_2": 9780,
+      "degree_3": 1196,
+      "degree_4_plus": 1956
+    },
+    "0.25": {
+      "nodes": 17143,
+      "degree_1": 6707,
+      "degree_2": 7471,
+      "degree_3": 833,
+      "degree_4_plus": 2132
+    },
+    "0.5": {
+      "nodes": 15039,
+      "degree_1": 5427,
+      "degree_2": 7338,
+      "degree_3": 662,
+      "degree_4_plus": 1612
+    },
+    "1.0": {
+      "nodes": 13201,
+      "degree_1": 4302,
+      "degree_2": 6838,
+      "degree_3": 708,
+      "degree_4_plus": 1353
+    }
+  }
+}
