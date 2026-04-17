@@ -15,13 +15,7 @@ import tokenize_dxf as td
 
 from . import provenance as pu
 from .geometry import entity_to_dxf_snippet as _entity_to_dxf_snippet
-
-
-FAMILY_LABELS = {
-    "walls": "Walls",
-    "columns": "Columns",
-    "curtain_walls": "Curtain Walls",
-}
+from .merge import FAMILY_LABELS
 
 
 def fmt_int(value: int) -> str:

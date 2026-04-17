@@ -128,34 +128,9 @@ HATCH_COMPANIONS: Dict[str, str] = {
     "S-STEEL COLUMN HATCH": "S-STEEL COLUMN",
 }
 
-# Polygon ID prefix map: raw layer -> short prefix following AIA etymology
-ID_PREFIX_MAP: Dict[str, str] = {
-    "A-EXTERNAL WALL":          "a_wall_ext",
-    "A-MEZZANINE WALL FULL":    "a_wall_mezz_full",
-    "A-MEZZANINE WALL FINISH":  "a_wall_mezz_fin",
-    "A-WALL 1":                 "a_wall_v1",
-    "A-WALL 2":                 "a_wall_v2",
-    "A-PARTITION WALL":         "a_wall_part",
-    "A-WALL PARAPET":           "a_wall_parapet",
-    "A-WALL NICHE":             "a_wall_niche",
-    "A-WALL PANEL":             "a_wall_panel",
-    "S-CONCRETE WALL":          "s_wall_conc",
-    "S-STEEL POST":             "s_post_steel",
-    "S-STEEL COLUMN":           "s_col_steel",
-    "S-COLUMN":                 "s_col",
-    "S-CONCRETE COLUMN":        "s_col_conc",
-    "S-COLUMN PROTECTION":      "s_col_prot",
-    "A-GLAZING MULLION":        "a_glaz_mull",
-    "A-GLAZING-MULLION":        "a_glaz_mull",     # merges with space variant for ID
-    "A-GLAZING FULL":           "a_glaz_full",
-    "A-GLAZING-FULL":           "a_glaz_full",      # merges with space variant for ID
-    "A-GLAZING INTERNAL":       "a_glaz_int",
-    "A-GLAZING ARRAY":          "a_glaz_array",
-    "A-GLAZING SILL":           "a_glaz_sill",
-    "A-WALL SILL":              "a_sill_wall",
-    "A-EXTERNAL GLASS":         "a_glass_ext",
-    "A-INTERNAL GLASS":         "a_glass_int",
-}
+# Canonical source for these maps is tokenize_dxf
+from tokenize_dxf import LAYER_ID_PREFIX as ID_PREFIX_MAP
+from tokenize_dxf import FAMILY_ID_FALLBACK as _FAMILY_ID_FALLBACK
 
 MATERIALS = {"STEEL", "CONCRETE"}
 LOCATIONS = {"EXTERNAL", "INTERNAL", "MEZZANINE", "PARTITION"}
@@ -248,7 +223,6 @@ def detect_anomalies(
     layer_names: List[str],
     layer_entity_types: Dict[str, Set[str]],
     layer_bboxes: Dict[str, Tuple[float, float, float, float]],
-    layer_counts: Dict[str, int],
     family_lookup: Dict[str, str],
 ) -> List[Anomaly]:
     anomalies: List[Anomaly] = []
@@ -441,8 +415,7 @@ def generate_polygon_id(
             return f"{prefix}_multi_{index:04d}"
 
     # Fallback for unknown layers on second test file
-    family_short = {"walls": "wall", "columns": "col", "curtain_walls": "cw"}
-    return f"{family_short.get(family, 'unk')}_{index:04d}"
+    return f"{_FAMILY_ID_FALLBACK.get(family, 'unk')}_{index:04d}"
 
 
 # ---------------------------------------------------------------------------
@@ -546,7 +519,7 @@ def run_normalization(dxf_path: Path, output_dir: Path, auto_heal: bool = False,
 
     # Detect anomalies
     anomalies = detect_anomalies(
-        all_layers, layer_entity_types, layer_bboxes, layer_counts, family_lookup
+        all_layers, layer_entity_types, layer_bboxes, family_lookup
     )
 
     if strict and anomalies:

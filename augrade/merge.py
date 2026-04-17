@@ -109,7 +109,7 @@ FAMILY_NOTES = {
     "curtain_walls": "Curtain wall panels often want local grouping while preserving grid structure, so continuity and size regularity matter more than unioning everything.",
 }
 
-ID_PREFIX = {"walls": "wall", "columns": "col", "curtain_walls": "cw"}
+from tokenize_dxf import FAMILY_ID_FALLBACK as ID_PREFIX
 
 
 def polygon_descriptor(
