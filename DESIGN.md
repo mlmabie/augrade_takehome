@@ -9,7 +9,7 @@ I treated the DXF problem as a tokenization problem over raw geometry:
 3. recover additional tokens by composing open primitives through endpoint closure
 4. classify tokens by family using layer priors plus lightweight geometric filters
 
-The implementation in [`tokenize_dxf.py`](/Users/malachi/augrade_takehome/tokenize_dxf.py) stays stdlib-only so it runs immediately in this environment without dependency installation.
+The implementation in [`tokenize_dxf.py`](tokenize_dxf.py) stays stdlib-only so it runs immediately in this environment without dependency installation. A thin library (`augrade/`) wraps the same functions for the dashboard, merge lab, REPL, and programmatic agent review; nothing new is implemented there, it just makes the extraction reusable from multiple entry points.
 
 ## Per-Family Strategy
 
@@ -17,7 +17,8 @@ The implementation in [`tokenize_dxf.py`](/Users/malachi/augrade_takehome/tokeni
 
 - Use direct closed geometry when present.
 - Flatten open `LINE`, `ARC`, and open polyline work into segments.
-- Snap endpoints at a configurable tolerance.
+- Snap endpoints at a configurable tolerance (`--snap-tolerance`, accepts
+  a scalar, a per-family map, or `adaptive`).
 - Build a planar half-edge structure and walk bounded faces.
 - Keep faces that are simple, clockwise after normalization, and wall-like by area/aspect.
 
@@ -67,7 +68,7 @@ This is the geometric analogue of tokenizer composition: characters become token
 5. Primitive-length coverage scoring against the output polygons.
 6. Learned tolerance and family disambiguation over ambiguous local regions.
 
-## Tokenization / ML / Category-Theory Framing
+## Framing
 
 The implementation is intentionally a low-entropy scaffold:
 
@@ -76,18 +77,19 @@ The implementation is intentionally a low-entropy scaffold:
 - simple validity checks
 - layer-name priors
 
-The production path would add a learned high-entropy layer on top:
+The production path adds a learned high-entropy layer on top:
 
 - learned tolerance selection by drafting style
 - ambiguous polygon disambiguation with sparse interpretable features
 - graph-based propagation over object tokens
 - correction-driven adaptation from reviewer feedback
 
-The category-theory view is useful but should stay practical:
-
-- primitives are generators
-- closure composes them into admissible polygons
-- snapping forms equivalence classes over nearby endpoints
-- family typing maps geometry into a typed semantics space without discarding provenance
-
-That is the right interview pivot: demonstrate the geometry cleanly, then explain how a learned relational layer would sit on top of it rather than pretending geometry alone solves the full production problem.
+The broader framing is **structured representation alignment** in the
+sense of the co-training literature: the right representation
+*aligns* cross-domain views (layer-schema variants, carrier choices,
+decomposition conventions) at the semantic level while *preserving
+domain discernibility* (source layer, carrier kind, variant group) as
+residuals. Collapsing provenance is the canonical failure mode;
+pooling for geometry while tagging for provenance is the
+corresponding fix. See [`reference/THESIS.md`](reference/THESIS.md)
+for the full framing and extension plan.

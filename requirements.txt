@@ -1,8 +1,11 @@
-# Core extraction (tokenize_dxf.py) uses only the standard library.
-# Tested with Python 3.13.
+# tokenize_dxf.py uses only the Python standard library.
+# Tested with Python 3.11 and 3.13.
+
+# Optional: ezdxf is needed by two library modules that read/write DXF:
+#   - augrade/normalize.py   (run_normalization: DXF layer stats)
+#   - augrade/emit_dxf.py    (write_cleaned_dxf: round-trip DXF output)
+# The stdlib solver, the dashboard, the merge lab, the REPL, and the
+# programmatic agent review all work without ezdxf. Install only if
+# you need the two DXF-writing modules:
 #
-# Optional: ezdxf is needed by the following modules:
-#   - augrade/normalize.py  (run_normalization: reads DXF for layer stats)
-#   - augrade/emit_dxf.py   (write_cleaned_dxf: reads/writes DXF files)
-# Install with: uv pip install ezdxf
-ezdxf
+#   uv pip install ezdxf
