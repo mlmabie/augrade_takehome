@@ -8,7 +8,7 @@ This memo sharpens the current research hypothesis:
 
 > Primitive cleanup and merge decisions in authored architectural DXF files should factor through a small quotient of independent latent dimensions.
 
-This is the tighter follow-on to [`PROCESS_JOURNAL.md`](/Users/malachi/augrade_takehome/PROCESS_JOURNAL.md). It also incorporates the empirical findings from [`layer_normalization_analysis.md`](/Users/malachi/augrade_takehome/layer_normalization_analysis.md).
+This is the tighter follow-on to [`../THESIS.md`](../THESIS.md). It also incorporates the empirical findings from [`../process/layer_normalization_analysis.md`](../process/layer_normalization_analysis.md).
 
 The goal here is not to claim a finished theorem. The goal is to define:
 
@@ -40,7 +40,7 @@ That is the sense in which the user’s ACT-style analogy is useful.
 
 ## What Layer Normalization Analysis Changed
 
-[`layer_normalization_analysis.md`](/Users/malachi/augrade_takehome/layer_normalization_analysis.md) materially improved the representation picture.
+[`layer_normalization_analysis.md`](../process/layer_normalization_analysis.md) materially improved the representation picture.
 
 Three findings matter:
 
@@ -106,7 +106,7 @@ Residual provenance coordinates:
 - retain drafting style, schema, zone, phase, or authorship information
 - should not be destroyed, because they matter for debugging and future learning
 
-This aligns with the recommendation from [`layer_normalization_analysis.md`](/Users/malachi/augrade_takehome/layer_normalization_analysis.md):
+This aligns with the recommendation from [`layer_normalization_analysis.md`](../process/layer_normalization_analysis.md):
 
 > pool for geometry, tag for provenance
 
@@ -194,8 +194,8 @@ This is one of the most important conclusions so far.
 
 The current merge-lab dataset is at:
 
-- [`out/merge_lab_data.json`](/Users/malachi/augrade_takehome/out/merge_lab_data.json)
-- [`out/merge_lab.html`](/Users/malachi/augrade_takehome/out/merge_lab.html)
+- `out/merge_lab_data.json` (generated on demand)
+- `out/merge_lab.html` (generated on demand)
 
 Some current distributional patterns:
 
@@ -320,7 +320,7 @@ If separate family heads dominate, then the quotient is typed rather than univer
 
 ## The Role Of Provenance In The Quotient Story
 
-This is where [`layer_normalization_analysis.md`](/Users/malachi/augrade_takehome/layer_normalization_analysis.md) is especially important.
+This is where [`layer_normalization_analysis.md`](../process/layer_normalization_analysis.md) is especially important.
 
 It prevents a bad simplification.
 

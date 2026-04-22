@@ -8,20 +8,20 @@ Test the hypothesis that cleanup and merge decisions in authored architectural D
 
 Primary references:
 
-- [`INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](/Users/malachi/augrade_takehome/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md)
-- [`PROCESS_JOURNAL.md`](/Users/malachi/augrade_takehome/PROCESS_JOURNAL.md)
-- [`layer_normalization_analysis.md`](/Users/malachi/augrade_takehome/layer_normalization_analysis.md)
+- [`INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](./INDEPENDENT_LATENT_DIMENSIONS_MEMO.md)
+- [`../THESIS.md`](../THESIS.md)
+- [`../process/layer_normalization_analysis.md`](../process/layer_normalization_analysis.md)
 
-Core tooling:
+Core tooling (regenerated on demand via `python -m augrade.cli.pipeline <dxf> <out>`; not tracked):
 
-- [`out/merge_lab.html`](/Users/malachi/augrade_takehome/out/merge_lab.html)
-- [`out/merge_lab_data.json`](/Users/malachi/augrade_takehome/out/merge_lab_data.json)
-- [`build_labeled_merge_dataset.py`](/Users/malachi/augrade_takehome/build_labeled_merge_dataset.py)
+- `out/merge_lab.html`
+- `out/merge_lab_data.json`
+- `python -m augrade.cli.labels` (the supervised-dataset builder)
 
 ## Phase 0: Freeze The Current Substrate
 
-- Confirm [`tokenize_dxf.py`](/Users/malachi/augrade_takehome/tokenize_dxf.py) and [`build_merge_lab.py`](/Users/malachi/augrade_takehome/build_merge_lab.py) still reproduce the current outputs.
-- Keep [`out/merge_lab_data.json`](/Users/malachi/augrade_takehome/out/merge_lab_data.json) as the first benchmark snapshot.
+- Confirm [`tokenize_dxf.py`](../../tokenize_dxf.py) and `python -m augrade.cli.merge_lab` still reproduce the current outputs.
+- Keep `out/merge_lab_data.json` as the first benchmark snapshot.
 - Do not change family definitions or candidate generation during the first round of latent-dimension experiments.
 
 Success condition:
@@ -30,7 +30,7 @@ Success condition:
 
 ## Phase 1: Collect Expert Labels
 
-Use [`out/merge_lab.html`](/Users/malachi/augrade_takehome/out/merge_lab.html).
+Use `out/merge_lab.html` (regenerated on demand).
 
 Label policy:
 
@@ -62,7 +62,7 @@ Success condition:
 Create the reusable dataset:
 
 ```bash
-python3 build_labeled_merge_dataset.py out/merge_lab_data.json path/to/exported_labels.json experiments/labeled_pairs
+python3 -m augrade.cli.labels out/merge_lab_data.json path/to/exported_labels.json --output experiments/labeled_pairs
 ```
 
 Outputs:
@@ -184,7 +184,7 @@ Success condition:
 
 ## Phase 6: Provenance Residual Analysis
 
-Use [`layer_normalization_analysis.md`](/Users/malachi/augrade_takehome/layer_normalization_analysis.md) explicitly here.
+Use [`../process/layer_normalization_analysis.md`](../process/layer_normalization_analysis.md) explicitly here.
 
 Questions:
 
