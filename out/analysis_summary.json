@@ -1,5 +1,5 @@
 {
-  "runtime_seconds": 2.5627810955047607,
+  "runtime_seconds": 2.71315598487854,
   "entity_type_counts": {
     "LINE": 58128,
     "LWPOLYLINE": 3408,
@@ -206,7 +206,9 @@
     "length_total": 1967355.755,
     "count_consumed": 4473,
     "length_consumed": 1010862.297,
-    "length_coverage_estimate": 0.5138
+    "length_coverage_estimate": 0.5138,
+    "coverage_method": "source_entity_length_proxy",
+    "coverage_note": "Proxy metric: sums drawable length of scoped source entities referenced by accepted polygons. It is not the brief's exact inside-or-near-output-polygon coverage calculation."
   },
   "wall_snap_stats": {
     "0.1": {

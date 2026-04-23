@@ -8,7 +8,11 @@ This memo sharpens the current research hypothesis:
 
 > Primitive cleanup and merge decisions in authored architectural DXF files should factor through a small quotient of independent latent dimensions.
 
-This is the tighter follow-on to [`../research/thesis.md`](../research/thesis.md). It also incorporates the empirical findings from [`../process/layer_normalization_analysis.md`](../process/layer_normalization_analysis.md).
+This is the tighter follow-on to [`../research/thesis.md`](../research/thesis.md)
+and the broader framing in
+[`../research/research_extension.md`](../research/research_extension.md). It
+also incorporates the empirical findings from
+[`../process/layer_normalization_analysis.md`](../process/layer_normalization_analysis.md).
 
 The goal here is not to claim a finished theorem. The goal is to define:
 

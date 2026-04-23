@@ -1,17 +1,17 @@
 # DXF Primitive-to-Polygon Reconstruction
 
-Airport mezzanine take-home: ~67,000 DXF primitives across ~111 layers,
-no grouping metadata, recover closed polygons grouped by element type.
+Airport mezzanine DXF: ~67,000 primitives across ~111 layers, no
+grouping metadata, recover closed polygons grouped by element type.
 
-This matches the take-home brief: scoped wall, column, and curtain-wall
-layers; JSON with `walls`, `columns`, `curtain_walls`, and `metrics`;
-clockwise closed rings; SVG overlays for review; warnings when scoped
-layers are missing. `HATCH` is a first-class primitive in DXF; companion
-`* HATCH` layers (fill vs outline on separate layers, as in the brief)
-are included in scope and contribute `direct_hatch` polygons where outer
-boundary paths parse.
+The solver targets scoped wall, column, and curtain-wall layers; JSON
+with `walls`, `columns`, `curtain_walls`, and `metrics`; clockwise
+closed rings; SVG overlays for review; and warnings when scoped layers
+are missing. `HATCH` is a first-class primitive in DXF; companion
+`* HATCH` layers (fill vs outline on separate layers) are included in
+scope and contribute `direct_hatch` polygons where outer boundary paths
+parse.
 
-The approach is a geometry-first tokenizer:
+The approach is geometry-first:
 
 - parse the DXF into primitive carriers
 - extract already-closed carriers directly
@@ -26,27 +26,21 @@ The approach is a geometry-first tokenizer:
 python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out
 ```
 
-Stdlib-only. No install step. Default is `--mode conservative`
-(snap = 0.5), which is the documented baseline and matches the
-canonical `out/` bundle in this repo.
+Stdlib-only. No install step. The flagless run is the default
+configuration (snap = 0.5) and matches the checked-in `out/` bundle.
 
 The result on the supplied file:
 
-| mode | walls | columns | curtain walls | coverage |
-| --- | --- | --- | --- | --- |
-| conservative (default) | 1158 | 764 | 304 | 51.4% |
-| liberal | 1173 | 781 | 309 | 51.9% |
+| walls | columns | curtain walls | coverage |
+| --- | --- | --- | --- |
+| 1158 | 764 | 304 | 51.4% |
 
-The previous graph/direct-only baseline was `274 / 572 / 304` at
-`19.9%` coverage. Companion HATCH layers now contribute `1453`
-`direct_hatch` polygons in conservative mode: `954` walls and `499`
-columns from the explicit wall and column companion layers. The
-coverage proxy counts drawable HATCH boundary paths, not rejected
-aggregate/texture paths inside multi-path HATCH entities.
+Coverage is reported as a source-entity-length proxy; it is not the
+grader's exact primitive-inside-polygon coverage calculation.
 
 Outputs written to `out/`:
 
-- `tokenization_output.json` — graded output (polygons per family, `source_layers`, `vertices`)
+- `tokenization_output.json` — deliverable JSON (polygons per family, `source_layers`, `vertices`)
 - `analysis_summary.json` — runtime, entity counts, family primitive counts, snap-tolerance sweep, direct-vs-graph-face split, coverage proxy, the resolved mode + snap-tolerance
 - `analysis_report.md` — short human-readable version
 - `raw_all.svg`, `raw_target_families.svg`, `extracted_overlay.svg`, `walls.svg`, `columns.svg`, `curtain_walls.svg`, `wall_connectivity_snap_<tol>.svg`
@@ -57,11 +51,11 @@ Three layers, in this order:
 
 ### 1. Direct Solver
 
-Start here for the take-home answer.
+Start here for the direct polygon-reconstruction path.
 
 - [`tokenize_dxf.py`](tokenize_dxf.py) — stdlib parser + extractor (single file)
 - [`DESIGN.md`](DESIGN.md) — one-page approach + per-family strategy + failure modes
-- [`out/tokenization_output.json`](out/tokenization_output.json) — graded output
+- [`out/tokenization_output.json`](out/tokenization_output.json) — deliverable JSON
 - [`out/extracted_overlay.svg`](out/extracted_overlay.svg) — visual verification
 
 ### 2. Supplementary Analysis
@@ -69,46 +63,34 @@ Start here for the take-home answer.
 Read this if you want to understand the artifact beyond the count.
 
 - [`reference/process/layer_normalization_analysis.md`](reference/process/layer_normalization_analysis.md) — why `FAMILY_LAYER_MAP` pools the hyphen/space variants
-- [`reference/research/programmatic_vs_contextual_merges.md`](reference/research/programmatic_vs_contextual_merges.md) — the two-quotient decomposition with per-family evidence
+- [`reference/research/programmatic_vs_contextual_merges.md`](reference/research/programmatic_vs_contextual_merges.md) — the two-stage merge decomposition with per-family evidence
 - `agent_merge_review.py` + `agent_labels.json` — programmatic labelling of 87 merge candidates (run it; it produces the labels)
 - `python -m augrade.cli.pipeline` — regenerates dashboard + merge lab on demand (not tracked)
 
 This layer is about provenance, drafting variation, merge ambiguity,
 and reviewability. It supports audit and annotation; it is not the
-graded output.
+primary output.
 
-### 3. Future ML Framing
+### 3. Research Direction
 
-Read this if you want the bridge from the take-home to a learned system.
+Read this if you want the bridge from this geometric scaffold to a
+learned review system.
 
-- [`reference/research/thesis.md`](reference/research/thesis.md) — structured representation alignment, the seven-layer stack, the extension plan
-- [`reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md) — the quotient claim sharpened
+- [`reference/research/thesis.md`](reference/research/thesis.md) — short, evidence-first thesis grounded in this file
+- [`reference/research/research_extension.md`](reference/research/research_extension.md) — broader GenAI research framing and staged extension plan
+- [`reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md) — the merge-relation hypothesis sharpened
 - [`reference/experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md`](reference/experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md) — phases 0–8
 
-The geometric solver in layer 1 is a preliminary scaffold. Layers 4+
-are deliberately not built into the take-home; they are sketched as
-the path forward, not pretended into the artifact.
+The geometric solver in layer 1 is the runnable artifact. Later layers
+are documented as future work, not part of the current solver.
 
-## Operating Modes
+## Parameter Notes
 
-Two named modes cover the operating story; they map to a single snap
-tolerance applied uniformly.
-
-| Mode | Snap | When to use |
-| --- | --- | --- |
-| `conservative` (default) | 0.5 | Submission / audit / canonical bundle |
-| `liberal` | 0.75 | Slightly wider snap; recovers a few more candidates with mild over-merging |
-
-```bash
-python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out --mode conservative
-python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out_liberal --mode liberal
-```
-
-After HATCH extraction, snap tolerance mainly affects graph-face
-recovery around the direct carriers. `0.5` is the default because it
-matches the wall-connectivity elbow and the reviewed overlay. More
-aggressive tolerances can add or reshuffle graph faces, but the coverage
-gain is marginal compared with the higher merge risk.
+The default result uses snap tolerance `0.5`. After
+HATCH extraction, snap tolerance mainly affects graph-face recovery
+around the direct carriers. More aggressive tolerances can add or
+reshuffle graph faces, but the coverage gain is marginal compared with
+the higher merge risk.
 
 ### Advanced override: `--snap-tolerance`
 
@@ -121,13 +103,13 @@ For experiments, `--snap-tolerance` overrides `--mode` and accepts:
 # per-family map (unspecified families fall back to the mean of provided values)
 --snap-tolerance walls=0.5,columns=0.25,curtain_walls=0.35
 
-# adaptive: elbow of the wall-family degree-4+ histogram, applied uniformly
+# adaptive: choose from a small wall-connectivity preset sweep
 --snap-tolerance adaptive
 ```
 
-The adaptive mode picks the elbow via the second-difference maximum
-over `[0.1, 0.25, 0.5, 1.0]`; on this file it returns `0.5`,
-matching `conservative`. This is an advanced surface, not the headline.
+The adaptive mode chooses from `[0.1, 0.25, 0.5, 1.0]` using a simple
+wall-connectivity score; on this file it returns `0.5`, matching the
+default. This is an advanced surface, not the default path.
 
 ## Library, REPL, and review surfaces
 
@@ -135,8 +117,8 @@ The same extraction is packaged so the dashboard, merge lab, REPL, and
 agent-review script all consume one `AnalysisDataset`:
 
 ```bash
-# full HITL bundle (regenerates dashboard + merge lab; none tracked)
-python3 -m augrade.cli.pipeline "Airport Doors_MEZZ.dxf" out_bundle --mode conservative
+# full review bundle (regenerates dashboard + merge lab; none tracked)
+python3 -m augrade.cli.pipeline "Airport Doors_MEZZ.dxf" out_bundle
 python3 scripts/verify_dashboards.py --bundle out_bundle
 python3 scripts/verify_regions.py --bundle out_bundle
 
@@ -147,8 +129,8 @@ python3 -m augrade.repl --input "Airport Doors_MEZZ.dxf" --output out_bundle
 python3 agent_merge_review.py "Airport Doors_MEZZ.dxf"
 ```
 
-The library exists to make the extraction reusable — it is not the
-main act. Review surfaces live in [`augrade/review/`](augrade/review/)
+The library exists to make the extraction reusable; it is optional, not
+required for the direct solver. Review surfaces live in [`augrade/review/`](augrade/review/)
 as a subpackage so `augrade/extract.py`, `augrade/geometry.py`,
 `augrade/dataset.py`, `augrade/merge.py`, and `augrade/provenance.py`
 can be read without paging through ~2500 lines of HTML generator. The
@@ -171,25 +153,22 @@ findings fed back into the solver's defaults:
    mullions drawn with different CAD conventions, ~97% spatial
    overlap. That is why `FAMILY_LAYER_MAP["curtain_walls"]` pools both.
 
-2. **Merges factor into two quotients.** A programmatic quotient
+2. **Merges factor into two stages.** A programmatic stage is
    decidable from provenance alone (same `canonical_layer` + gap ≈ 0
-   + different `source_kind`) and a contextual quotient that needs
+   + different `source_kind`), followed by a contextual stage that needs
    neighborhood reasoning. On this file 29/29 curtain-wall merges are
    programmatic; only 1/28 wall merges are.
 
-3. **Snap tolerance has an elbow.** The wall-family degree-4+
-   histogram has a discernible elbow around 0.5; `0.75` recovers a few
-   more polygons at the cost of some merge precision. The two named
-   modes encode this directly.
+3. **Snap tolerance has a validated default.** The wall-family
+   connectivity sweep selects 0.5, which is the default.
 
-The slogan tying these together is **"pool for geometry, tag for
-provenance"** — align cross-domain views (layer variants, carrier
-choices, decomposition conventions) at the semantic level, preserve
-domain discernibility as a residual side channel. That is the same
-shape as *structured representation alignment* in the co-training
-literature, applied to authored drafting rewrites rather than the
-sim-to-real gap. Full framing in
-[`reference/research/thesis.md`](reference/research/thesis.md).
+The principle tying these together is **"pool for geometry, tag for
+provenance"** — use layer variants and carrier choices together for
+geometry, but keep enough provenance to audit every polygon. The short
+evidence-first thesis lives in
+[`reference/research/thesis.md`](reference/research/thesis.md), with the
+broader research extension separated into
+[`reference/research/research_extension.md`](reference/research/research_extension.md).
 
 ## Current limits
 
@@ -226,24 +205,22 @@ augrade/                              library and review surfaces
   pipeline.py                         one-shot full bundle
   repl.py                             interactive workbench
   cli/                                thin CLI shims
-  review/                             isolated HITL: dashboard, merge lab, labels
+  review/                             isolated review UI: dashboard, merge lab, labels
 
 reference/
-  research/thesis.md                  framing + extension plan
+  research/thesis.md                  evidence-first thesis
+  research/research_extension.md      broader research framing
   research/programmatic_vs_contextual_merges.md
   process/layer_normalization_analysis.md
   experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md
   experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md
 
-out/                                  canonical generated bundle (SVGs + JSON + report)
+out/                                  default generated bundle (SVGs + JSON + report)
 ```
 
-## Bottom line
+## Summary
 
-A single stdlib command produces the graded polygons; a library, REPL,
-and isolated review subpackage sit next to it for the HITL loop the
-extension plan depends on; the reference docs frame the whole thing
-as structured representation alignment and lay out what the next
-layers of the stack look like. The defaults, pooling choices, and
-mode names in the solver are defended by the findings in the
+A single stdlib command produces the required polygons. The library, REPL,
+and isolated review subpackage are optional review tools. The default
+tolerance and pooling choices are defended by concrete findings in the
 reference docs, not chosen by hand.

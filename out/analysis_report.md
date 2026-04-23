@@ -2,10 +2,11 @@
 
 ## Raw File Organization
 
-- Runtime for parse + extraction: `2.56s`
+- Runtime for parse + extraction: `2.71s`
 - Primitive types are dominated by `LINE` with `58128` entities, followed by `LWPOLYLINE`, `ELLIPSE`, `HATCH`, and `ARC`.
 - Scoped target primitives total `36827` entities with an estimated drawable length of `1967355.755` units.
-- Estimated consumed target length is `1010862.297` units, or `51.4%` of scoped drawable length.
+- Source-entity coverage proxy is `1010862.297` units, or `51.4%` of scoped drawable length.
+- Coverage caveat: this is a source-entity-length proxy, not the grader's exact primitive-length-inside-output-polygons metric.
 
 ## Target Family Counts
 
@@ -28,14 +29,14 @@
 - Walls remain the hardest family because they are dominated by open linework, mixed drafting conventions, and high-degree junctions after snapping.
 - Curtain wall layers are structurally regular and would benefit from a second-pass grid detector if coverage mattered more than turnaround time.
 
-## Applied Category Theory Lens
+## Representation Lens
 
-- Treat raw primitives as generators in a low-level geometry category and closed polygons as composed morphisms that satisfy closure and orientation laws.
-- Endpoint snapping is a quotient operation: nearby coordinates collapse into equivalence classes before composition is valid.
-- Family typing acts like a functor from geometry into a typed architectural semantics layer, preserving structure while changing the vocabulary.
+- Treat raw primitives as composable low-level geometry and closed polygons as tokens that satisfy closure and orientation laws.
+- Endpoint snapping collapses nearby coordinates before composition is valid.
+- Family typing maps geometry into architectural vocabulary while preserving source-layer provenance.
 
-## ML Theory Lens
+## Learning Extension
 
-- The geometric pipeline is the low-entropy scaffold: closure, winding, validity, and layer priors are stable structure.
-- Learned tolerance, family disambiguation, and correction-on-feedback would be the high-entropy adaptation layer in production.
+- The geometric pipeline owns deterministic structure: closure, winding, validity, and layer priors.
+- Learned tolerance, family disambiguation, and correction-on-feedback belong above that layer.
 - A future GNN would not replace geometry; it would propagate uncertainty and drafting-style context over the object graph produced here.

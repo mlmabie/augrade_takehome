@@ -35,9 +35,8 @@ The naive response is `name.replace('-', ' ')` and move on. That's wrong. Layer 
 ### HATCH Companion Layers
 
 Four wall layers have HATCH companion layers that contain the same
-physical elements drawn as filled regions. The initial scaffold treated
-them as outside the direct target set; the current solver now enumerates
-these layers explicitly in `FAMILY_LAYER_MAP["walls"]` and preserves the
+physical elements drawn as filled regions. The solver enumerates these
+layers explicitly in `FAMILY_LAYER_MAP["walls"]` and preserves the
 companion layer names in `source_layers`.
 
 | Target Layer | Companion Layer | Count | Entity Types |
@@ -200,7 +199,7 @@ A polygon with `source_layers: ["A-GLAZING FULL", "A-GLAZING-FULL"]` tells the r
 
 1. **Reversibility.** Any downstream consumer can reconstruct which raw primitives on which raw layers contributed to any output polygon. The lossy merge (family pooling) is efficient for extraction; the residual table makes it lossless for auditing.
 
-2. **Generalization.** The second test DXF will have "similar layer names but different geometry and a different drafter." A naive normalizer tuned to this file's naming quirks will break. An empirical merge strategy that reports *spatial overlap* and *entity-type similarity* will surface whatever naming conventions the new file uses without hardcoding.
+2. **Generalization.** External DXFs may have similar layer names but different geometry and different drafting conventions. A naive normalizer tuned to this file's naming quirks will break. An empirical merge strategy that reports *spatial overlap* and *entity-type similarity* can surface file-specific naming conventions without hardcoding them.
 
 3. **Signal preservation.** If the space-vs-hyphen distinction encodes drafting phase, sub-contractor, or schema version, that signal survives in the provenance table even though it was collapsed for geometric extraction. A future system could learn from this — for example, discovering that hyphen-variant layers tend to have higher drafting quality or different tolerance profiles.
 
@@ -226,5 +225,4 @@ This analysis is implemented in two scripts:
 - **`tokenize_dxf.py`** — the extraction pipeline. Consumes the layer→family map and ID prefix scheme from the normalization step. Every output polygon gets an AIA-grammar-aware ID (e.g., `s_col_steel_0015`) and `source_layers` back-attribution.
 
 See also:
-- `layer_etymology.md` — full AIA/NCS grammar decomposition and ID naming scheme
-- `out_norm/normalization_report.md` — latest anomaly report from this file
+- `tokenize_dxf.py::LAYER_ID_PREFIX` — current ID prefix scheme

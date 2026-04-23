@@ -1,8 +1,12 @@
-"""Augrade DXF tokenization and HITL pipeline package.
+"""Reusable DXF primitive-to-polygon extraction package.
+
+The `augrade` package name is workspace-derived. The direct runnable
+entry point is `tokenize_dxf.py`; this package exposes the same
+extraction for dashboards, the merge lab, the REPL, and review scripts.
 
 Single compute layer (dataset) with multiple views:
 - DXF-native review: normalize + extract + emit_dxf
-- Provenance-first HITL: dashboard + merge lab
+- Provenance-first review: dashboard + merge lab
 - Interactive: repl
 """
 

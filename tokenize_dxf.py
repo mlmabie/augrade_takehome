@@ -15,11 +15,9 @@ from typing import Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, 
 Point = Tuple[float, float]
 
 
-# Named extraction modes are the headline operating story:
-#   conservative -- documented baseline; matches the canonical out/ bundle
-#   liberal      -- recovers a few more candidates with mild over-merging
-# The richer --snap-tolerance interface (scalar, per-family map, adaptive)
-# is kept as an advanced override and rarely needed at the CLI.
+# The flagless/default run uses conservative=0.5 and matches the checked-in
+# out/ bundle. The liberal preset and --snap-tolerance forms are retained for
+# audit/debug sweeps, not as alternate submission outputs.
 SNAP_TOLERANCE_MODES: Dict[str, float] = {
     "conservative": 0.5,
     "liberal": 0.75,
@@ -72,7 +70,8 @@ CANONICAL_FAMILY_LAYERS = {
     for family, layers in FAMILY_LAYER_MAP.items()
 }
 
-# AIA-grammar-aware polygon ID prefixes (see layer_etymology.md)
+# AIA-grammar-aware polygon ID prefixes; companion HATCH layers keep distinct
+# prefixes so provenance remains visible in generated IDs.
 LAYER_ID_PREFIX: Dict[str, str] = {
     "A-EXTERNAL WALL":          "a_wall_ext",
     "A-EXTERNAL WALL HATCH":    "a_wall_ext_hatch",
@@ -1271,6 +1270,9 @@ def dedupe_polygons(polygons: Sequence[PolygonRecord]) -> List[PolygonRecord]:
     merged: Dict[Tuple[str, float, float, float, float, float, float], PolygonRecord] = {}
     for polygon in polygons:
         min_x, min_y, max_x, max_y = polygon.bbox
+        # Location is part of the key through the rounded bbox, so this only
+        # merges duplicate recoveries of the same local shape, not repeated
+        # identical columns or panels elsewhere in the plan.
         key = (
             polygon.family,
             round(polygon.area, 1),
@@ -1338,7 +1340,7 @@ def generate_polygon_id(polygon: PolygonRecord, index: int) -> str:
             prefix = LAYER_ID_PREFIX.get(layer)
             if prefix:
                 return f"{prefix}_multi_{index:04d}"
-    # Fallback for unknown layers (e.g. second test file)
+    # Fallback for unknown layers outside the scoped family map.
     fallback = FAMILY_ID_FALLBACK.get(polygon.family, "unk")
     return f"{fallback}_{index:04d}"
 
@@ -1381,16 +1383,16 @@ def compute_snap_stats(entities: Sequence[Entity], wall_tolerances: Sequence[flo
 ADAPTIVE_CANDIDATE_TOLERANCES: Tuple[float, ...] = (0.1, 0.25, 0.5, 1.0)
 
 
-def pick_adaptive_tolerance(
+def pick_best_wall_tolerance(
     entities: Sequence[Entity],
     candidates: Sequence[float] = ADAPTIVE_CANDIDATE_TOLERANCES,
     fallback: float = 0.5,
 ) -> float:
-    """Pick the elbow of the wall-family degree-4+ curve across candidate tolerances.
+    """Choose one tolerance from a small wall-connectivity sweep.
 
-    Second-difference maximum identifies where the curve stops improving
-    materially; returns the tolerance at that elbow. Falls back to a
-    documented default if the curve is too short or monotonic.
+    This scores the documented candidates by the local change in the wall
+    degree-4+ curve and returns the strongest interior candidate. The
+    documented default run remains 0.5.
     """
     stats = compute_snap_stats(entities, wall_tolerances=candidates)
     tols = sorted(candidates)
@@ -1413,15 +1415,15 @@ def resolve_snap_tolerance(arg: str, entities: Optional[Sequence[Entity]] = None
     - ``"0.5"``                        uniform scalar
     - ``"walls=0.5,columns=0.25"``     per-family, missing families fall back
                                        to the mean of provided values
-    - ``"adaptive"``                   elbow-picked single scalar from the
-                                       wall degree-distribution histogram
+    - ``"adaptive"``                   best scalar from the small wall
+                                       connectivity sweep
                                        (requires ``entities`` to be provided)
     """
     text = arg.strip()
     if text == "adaptive":
         if entities is None:
             raise ValueError("adaptive snap tolerance requires parsed entities")
-        return pick_adaptive_tolerance(entities)
+        return pick_best_wall_tolerance(entities)
     if "=" in text:
         parsed: Dict[str, float] = {}
         for token in text.split(","):
@@ -1626,6 +1628,12 @@ def build_analysis_summary(
             "count_consumed": len(consumed_target_entities),
             "length_consumed": round(consumed_target_length, 3),
             "length_coverage_estimate": round(consumed_target_length / total_target_length, 4) if total_target_length else 0.0,
+            "coverage_method": "source_entity_length_proxy",
+            "coverage_note": (
+                "Proxy metric: sums drawable length of scoped source entities "
+                "referenced by accepted polygons. It is not the brief's exact "
+                "inside-or-near-output-polygon coverage calculation."
+            ),
         },
         "wall_snap_stats": snap_stats,
     }
@@ -1679,7 +1687,8 @@ def write_analysis_report(path: Path, summary: Dict[str, object]) -> None:
         f"- Runtime for parse + extraction: `{summary['runtime_seconds']:.2f}s`",
         f"- Primitive types are dominated by `LINE` with `{summary['entity_type_counts'].get('LINE', 0)}` entities, followed by `LWPOLYLINE`, `ELLIPSE`, `HATCH`, and `ARC`.",
         f"- Scoped target primitives total `{target_totals['count']}` entities with an estimated drawable length of `{target_totals['length_total']}` units.",
-        f"- Estimated consumed target length is `{target_totals['length_consumed']}` units, or `{target_totals['length_coverage_estimate']:.1%}` of scoped drawable length.",
+        f"- Source-entity coverage proxy is `{target_totals['length_consumed']}` units, or `{target_totals['length_coverage_estimate']:.1%}` of scoped drawable length.",
+        "- Coverage caveat: this is a source-entity-length proxy, not the grader's exact primitive-length-inside-output-polygons metric.",
         "",
         "## Target Family Counts",
         "",
@@ -1705,16 +1714,16 @@ def write_analysis_report(path: Path, summary: Dict[str, object]) -> None:
             "- Walls remain the hardest family because they are dominated by open linework, mixed drafting conventions, and high-degree junctions after snapping.",
             "- Curtain wall layers are structurally regular and would benefit from a second-pass grid detector if coverage mattered more than turnaround time.",
             "",
-            "## Applied Category Theory Lens",
+            "## Representation Lens",
             "",
-            "- Treat raw primitives as generators in a low-level geometry category and closed polygons as composed morphisms that satisfy closure and orientation laws.",
-            "- Endpoint snapping is a quotient operation: nearby coordinates collapse into equivalence classes before composition is valid.",
-            "- Family typing acts like a functor from geometry into a typed architectural semantics layer, preserving structure while changing the vocabulary.",
+            "- Treat raw primitives as composable low-level geometry and closed polygons as tokens that satisfy closure and orientation laws.",
+            "- Endpoint snapping collapses nearby coordinates before composition is valid.",
+            "- Family typing maps geometry into architectural vocabulary while preserving source-layer provenance.",
             "",
-            "## ML Theory Lens",
+            "## Learning Extension",
             "",
-            "- The geometric pipeline is the low-entropy scaffold: closure, winding, validity, and layer priors are stable structure.",
-            "- Learned tolerance, family disambiguation, and correction-on-feedback would be the high-entropy adaptation layer in production.",
+            "- The geometric pipeline owns deterministic structure: closure, winding, validity, and layer priors.",
+            "- Learned tolerance, family disambiguation, and correction-on-feedback belong above that layer.",
             "- A future GNN would not replace geometry; it would propagate uncertainty and drafting-style context over the object graph produced here.",
         ]
     )
@@ -1760,7 +1769,7 @@ def main() -> None:
         default="conservative",
         help=(
             "Named extraction preset. conservative=0.5 (submission/audit "
-            "default, matches canonical out/), liberal=0.75 (slightly "
+            "default, matches checked-in out/), liberal=0.75 (slightly "
             "wider snap, recovers a few more candidates with mild "
             "over-merging). --snap-tolerance overrides --mode when given."
         ),
@@ -1772,7 +1781,7 @@ def main() -> None:
         help=(
             "Advanced override: scalar (e.g. '0.5'), per-family map "
             "('walls=0.5,columns=0.25,curtain_walls=0.35'), or "
-            "'adaptive' (elbow of the wall-family degree-4+ histogram). "
+            "'adaptive' (small wall-connectivity preset sweep). "
             "Overrides --mode when provided."
         ),
     )
