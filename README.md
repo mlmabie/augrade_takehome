@@ -25,6 +25,61 @@ That is why the code treats:
 - polygons as tokens
 - family inference as typed semantics on top of closure
 
+For the broader representation and ML framing behind the supplementary work, see [`reference/research/thesis.md`](reference/research/thesis.md).
+
+## How To Read This Repo
+
+Read the repo in three layers:
+
+### 1. Direct Solver
+
+Start here if you want the straight take-home answer.
+
+- [`tokenize_dxf.py`](tokenize_dxf.py)
+- [`DESIGN.md`](DESIGN.md)
+- [`out/tokenization_output.json`](out/tokenization_output.json)
+- [`out/extracted_overlay.svg`](out/extracted_overlay.svg)
+
+This is the geometry-first solution:
+
+- primitives in
+- closed polygons out
+- family-typed outputs
+- reproducible artifacts
+
+### 2. Supplementary Analysis
+
+Read this if you want to understand what the file is doing beyond the direct extraction result.
+
+- [`reference/process/PROCESS_JOURNAL.md`](reference/process/PROCESS_JOURNAL.md)
+- [`reference/process/layer_normalization_analysis.md`](reference/process/layer_normalization_analysis.md)
+- [`out/dashboard.html`](out/dashboard.html)
+- [`out/merge_lab.html`](out/merge_lab.html)
+
+This layer is about:
+
+- provenance
+- drafting variation
+- merge ambiguity
+- reviewability
+
+It is there to clarify the artifact and support audit / annotation, not to replace the core solver.
+
+### 3. Future ML Framing
+
+Read this if you want the bridge from the take-home to a learned system.
+
+- [`reference/research/thesis.md`](reference/research/thesis.md)
+- [`reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md)
+- [`reference/experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md`](reference/experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md)
+
+This layer is about:
+
+- rewrite-invariant pair relations
+- provenance residuals
+- annotation workflows
+- future merge / graph learning
+
 ## What To Run
 
 ### Minimal Solver

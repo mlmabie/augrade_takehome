@@ -82,6 +82,7 @@ The production path would add a learned high-entropy layer on top:
 - ambiguous polygon disambiguation with sparse interpretable features
 - graph-based propagation over object tokens
 - correction-driven adaptation from reviewer feedback
+- rewrite-invariance under drafting-convention symmetries as a training-time augmentation, not just a post-hoc validation check
 
 The category-theory view is useful but should stay practical:
 
