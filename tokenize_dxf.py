@@ -1390,6 +1390,7 @@ def main() -> None:
     )
     parser.add_argument("--normalization", type=Path, default=None, help="Path to normalization.json (overrides hardcoded maps).")
     args = parser.parse_args()
+    effective_snap_tolerance = args.snap_tolerance if args.snap_tolerance is not None else SNAP_TOLERANCE_MODES[args.mode]
 
     # Load normalization output if provided — makes it the source of truth for maps
     norm = load_normalization(args.normalization)
