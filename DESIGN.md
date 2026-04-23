@@ -83,6 +83,7 @@ The production path adds a learned high-entropy layer on top:
 - ambiguous polygon disambiguation with sparse interpretable features
 - graph-based propagation over object tokens
 - correction-driven adaptation from reviewer feedback
+- rewrite-invariance under drafting-convention symmetries as a training-time augmentation, not just a post-hoc validation check
 
 The broader framing is **structured representation alignment** in the
 sense of the co-training literature: the right representation
@@ -91,5 +92,5 @@ decomposition conventions) at the semantic level while *preserving
 domain discernibility* (source layer, carrier kind, variant group) as
 residuals. Collapsing provenance is the canonical failure mode;
 pooling for geometry while tagging for provenance is the
-corresponding fix. See [`reference/THESIS.md`](reference/THESIS.md)
+corresponding fix. See [`reference/research/thesis.md`](reference/research/thesis.md)
 for the full framing and extension plan.

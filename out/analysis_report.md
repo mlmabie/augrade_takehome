@@ -2,7 +2,7 @@
 
 ## Raw File Organization
 
-- Runtime for parse + extraction: `3.28s`
+- Runtime for parse + extraction: `2.61s`
 - Primitive types are dominated by `LINE` with `58128` entities, followed by `LWPOLYLINE`, `ELLIPSE`, `HATCH`, and `ARC`.
 - Scoped target primitives total `34834` entities with an estimated drawable length of `1144751.426` units.
 - Estimated consumed target length is `228196.808` units, or `19.9%` of scoped drawable length.

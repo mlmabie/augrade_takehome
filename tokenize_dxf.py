@@ -15,6 +15,17 @@ from typing import Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, 
 Point = Tuple[float, float]
 
 
+# Named extraction modes are the headline operating story:
+#   conservative -- documented baseline; matches the canonical out/ bundle
+#   liberal      -- recovers a few more candidates with mild over-merging
+# The richer --snap-tolerance interface (scalar, per-family map, adaptive)
+# is kept as an advanced override and rarely needed at the CLI.
+SNAP_TOLERANCE_MODES: Dict[str, float] = {
+    "conservative": 0.5,
+    "liberal": 0.75,
+}
+
+
 FAMILY_LAYER_MAP = {
     "walls": {
         "A-EXTERNAL WALL",
@@ -1356,15 +1367,25 @@ def main() -> None:
     parser.add_argument("input_dxf", type=Path, help="Path to the source DXF file.")
     parser.add_argument("output_dir", type=Path, help="Directory for JSON, SVG, and report outputs.")
     parser.add_argument(
+        "--mode",
+        choices=sorted(SNAP_TOLERANCE_MODES),
+        default="conservative",
+        help=(
+            "Named extraction preset. conservative=0.5 (submission/audit "
+            "default, matches canonical out/), liberal=0.75 (slightly "
+            "wider snap, recovers a few more candidates with mild "
+            "over-merging). --snap-tolerance overrides --mode when given."
+        ),
+    )
+    parser.add_argument(
         "--snap-tolerance",
         type=str,
-        default="0.5",
+        default=None,
         help=(
-            "Endpoint snap tolerance for graph reconstruction. "
-            "Accepts a scalar (e.g. '0.5'), a per-family map "
+            "Advanced override: scalar (e.g. '0.5'), per-family map "
             "('walls=0.5,columns=0.25,curtain_walls=0.35'), or "
-            "the literal 'adaptive' to pick the elbow of the "
-            "wall-family degree-4+ histogram."
+            "'adaptive' (elbow of the wall-family degree-4+ histogram). "
+            "Overrides --mode when provided."
         ),
     )
     parser.add_argument("--normalization", type=Path, default=None, help="Path to normalization.json (overrides hardcoded maps).")
@@ -1387,7 +1408,10 @@ def main() -> None:
         for layer in missing:
             print(f"WARNING: scoped layer not found in file: {layer}", file=sys.stderr)
 
-    snap_tolerance = resolve_snap_tolerance(args.snap_tolerance, entities=entities)
+    if args.snap_tolerance is not None:
+        snap_tolerance = resolve_snap_tolerance(args.snap_tolerance, entities=entities)
+    else:
+        snap_tolerance = SNAP_TOLERANCE_MODES[args.mode]
     report_tolerance = snap_tolerance_for_report(snap_tolerance)
 
     direct_polygons = extract_direct_polygons(entities)
@@ -1402,6 +1426,7 @@ def main() -> None:
         runtime_seconds=runtime_seconds,
         snap_stats=compute_snap_stats(entities, wall_tolerances=[0.1, 0.25, 0.5, 1.0]),
     )
+    summary["mode"] = args.mode if args.snap_tolerance is None else "custom"
     summary["snap_tolerance"] = (
         dict(snap_tolerance) if isinstance(snap_tolerance, Mapping) else snap_tolerance
     )
@@ -1450,7 +1475,12 @@ def main() -> None:
                 polygon_filter=lambda polygon, family=family: polygon.family == family,
             )
 
-    write_wall_connectivity_svg(output_dir / "wall_connectivity_snap_0_5.svg", graph_segments, tolerance=report_tolerance)
+    suffix = format(report_tolerance, "g").replace(".", "_")
+    write_wall_connectivity_svg(
+        output_dir / f"wall_connectivity_snap_{suffix}.svg",
+        graph_segments,
+        tolerance=report_tolerance,
+    )
 
     counts = family_polygon_counts(polygons)
     coverage = summary["target_primitive_totals"]["length_coverage_estimate"]

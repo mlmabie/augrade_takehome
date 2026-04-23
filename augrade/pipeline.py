@@ -29,6 +29,7 @@ def write_tokenization_bundle(input_dxf: Path, output_dir: Path, snap_tolerance)
     summary["snap_tolerance"] = (
         dict(snap_tolerance) if isinstance(snap_tolerance, dict) else snap_tolerance
     )
+    summary["scalar_snap_tolerance"] = report_tolerance
     output_json = td.build_output_json(polygons, entities, runtime_seconds=summary["runtime_seconds"])
     provenance = pu.build_provenance_index(entities)
 
@@ -61,7 +62,12 @@ def write_tokenization_bundle(input_dxf: Path, output_dir: Path, snap_tolerance)
                 entity_filter=lambda entity, family=family: entity.family == family,
                 polygon_filter=lambda polygon, family=family: polygon.family == family,
             )
-    td.write_wall_connectivity_svg(output_dir / "wall_connectivity_snap_0_5.svg", graph_segments, tolerance=report_tolerance)
+    suffix = format(report_tolerance, "g").replace(".", "_")
+    td.write_wall_connectivity_svg(
+        output_dir / f"wall_connectivity_snap_{suffix}.svg",
+        graph_segments,
+        tolerance=report_tolerance,
+    )
 
     return {
         "extraction": extraction,
@@ -81,12 +87,17 @@ def main() -> None:
     parser.add_argument("input_dxf", type=Path, help="Source DXF file.")
     parser.add_argument("output_dir", type=Path, help="Directory for all generated artifacts.")
     parser.add_argument(
+        "--mode",
+        choices=sorted(td.SNAP_TOLERANCE_MODES),
+        default="conservative",
+        help="Named extraction preset. conservative=0.5, liberal=0.75. Overridden by --snap-tolerance.",
+    )
+    parser.add_argument(
         "--snap-tolerance",
         type=str,
-        default="0.5",
+        default=None,
         help=(
-            "Endpoint snap tolerance for graph reconstruction. "
-            "Accepts a scalar, a per-family map "
+            "Advanced override: scalar, per-family map "
             "('walls=0.5,columns=0.25,curtain_walls=0.35'), or 'adaptive'."
         ),
     )
@@ -94,11 +105,17 @@ def main() -> None:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Resolve the snap argument once against parsed entities so every caller
-    # (dashboard, merge lab, connectivity SVG) sees the same value.
+    # Resolve once against parsed entities so every caller (dashboard,
+    # merge lab, connectivity SVG, manifest) sees the same value.
     entities = list(td.iter_entities(args.input_dxf))
-    snap_tolerance = td.resolve_snap_tolerance(args.snap_tolerance, entities=entities)
+    if args.snap_tolerance is not None:
+        snap_tolerance = td.resolve_snap_tolerance(args.snap_tolerance, entities=entities)
+        mode_label = "custom"
+    else:
+        snap_tolerance = td.SNAP_TOLERANCE_MODES[args.mode]
+        mode_label = args.mode
     scalar_snap = td.snap_tolerance_for_report(snap_tolerance)
+    suffix = format(scalar_snap, "g").replace(".", "_")
 
     token_summary = write_tokenization_bundle(args.input_dxf, args.output_dir, snap_tolerance)
     extraction = token_summary["extraction"]
@@ -107,9 +124,11 @@ def main() -> None:
 
     manifest = {
         "input_file": str(args.input_dxf),
+        "mode": mode_label,
         "snap_tolerance": (
             dict(snap_tolerance) if isinstance(snap_tolerance, dict) else snap_tolerance
         ),
+        "scalar_snap_tolerance": scalar_snap,
         "polygon_counts": token_summary["polygon_counts"],
         "provenance_summary": token_summary["provenance"],
         "artifacts": [
@@ -123,7 +142,7 @@ def main() -> None:
             "walls.svg",
             "columns.svg",
             "curtain_walls.svg",
-            "wall_connectivity_snap_0_5.svg",
+            f"wall_connectivity_snap_{suffix}.svg",
             "dashboard.html",
             "merge_lab.html",
             "merge_lab_data.json",

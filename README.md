@@ -12,134 +12,164 @@ The approach is a geometry-first tokenizer:
 - filter faces by family-relevant geometry
 - preserve `source_layers` so every polygon stays traceable
 
-The slogan for why provenance survives is **"pool for geometry, tag for
-provenance"** — align cross-domain views (layer variants, carrier
-choices, decomposition conventions) at the semantic level, preserve
-domain discernibility as a residual side channel. That's the same
-shape as *structured representation alignment* in the co-training
-literature, applied to authored drafting rewrites rather than the
-sim-to-real gap. See [`reference/THESIS.md`](reference/THESIS.md).
-
 ## Run
-
-Stdlib-only solver:
 
 ```bash
 python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out
 ```
 
-The snap tolerance is unified behind one argument:
+Stdlib-only. No install step. Default is `--mode conservative`
+(snap = 0.5), which is the documented baseline and matches the
+canonical `out/` bundle in this repo.
 
-```bash
-# scalar, uniform across all families (default 0.5)
-python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out --snap-tolerance 0.5
+The result on the supplied file:
 
-# per-family (unspecified families fall back to the mean of provided values)
-python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out \
-    --snap-tolerance walls=0.5,columns=0.25,curtain_walls=0.35
+| mode | walls | columns | curtain walls | coverage |
+| --- | --- | --- | --- | --- |
+| conservative (default) | 274 | 572 | 304 | 19.9% |
+| liberal | 288 | 568 | 309 | 20.8% |
 
-# adaptive: elbow of the wall-family degree-4+ histogram, applied uniformly
-python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out --snap-tolerance adaptive
-```
-
-The solver writes, to `out/`:
+Outputs written to `out/`:
 
 - `tokenization_output.json` — graded output (polygons per family, `source_layers`, `vertices`)
-- `analysis_summary.json` — runtime, entity counts, family primitive counts, snap-tolerance sweep, direct-vs-graph-face split, coverage proxy, the resolved snap-tolerance value
+- `analysis_summary.json` — runtime, entity counts, family primitive counts, snap-tolerance sweep, direct-vs-graph-face split, coverage proxy, the resolved mode + snap-tolerance
 - `analysis_report.md` — short human-readable version
-- `raw_all.svg`, `raw_target_families.svg`, `extracted_overlay.svg`, `walls.svg`, `columns.svg`, `curtain_walls.svg`, `wall_connectivity_snap_0_5.svg`
+- `raw_all.svg`, `raw_target_families.svg`, `extracted_overlay.svg`, `walls.svg`, `columns.svg`, `curtain_walls.svg`, `wall_connectivity_snap_<tol>.svg`
 
-Result on the supplied file: **274 walls, 572 columns, 304 curtain
-walls** in ~4 seconds, consuming ~19.9% of scoped-layer drawable
-length. Reproducible from the command above.
+## How To Read This Repo
+
+Three layers, in this order:
+
+### 1. Direct Solver
+
+Start here for the take-home answer.
+
+- [`tokenize_dxf.py`](tokenize_dxf.py) — stdlib parser + extractor (single file)
+- [`DESIGN.md`](DESIGN.md) — one-page approach + per-family strategy + failure modes
+- [`out/tokenization_output.json`](out/tokenization_output.json) — graded output
+- [`out/extracted_overlay.svg`](out/extracted_overlay.svg) — visual verification
+
+### 2. Supplementary Analysis
+
+Read this if you want to understand the artifact beyond the count.
+
+- [`reference/process/layer_normalization_analysis.md`](reference/process/layer_normalization_analysis.md) — why `FAMILY_LAYER_MAP` pools the hyphen/space variants
+- [`reference/research/programmatic_vs_contextual_merges.md`](reference/research/programmatic_vs_contextual_merges.md) — the two-quotient decomposition with per-family evidence
+- `agent_merge_review.py` + `agent_labels.json` — programmatic labelling of 87 merge candidates (run it; it produces the labels)
+- `python -m augrade.cli.pipeline` — regenerates dashboard + merge lab on demand (not tracked)
+
+This layer is about provenance, drafting variation, merge ambiguity,
+and reviewability. It supports audit and annotation; it is not the
+graded output.
+
+### 3. Future ML Framing
+
+Read this if you want the bridge from the take-home to a learned system.
+
+- [`reference/research/thesis.md`](reference/research/thesis.md) — structured representation alignment, the seven-layer stack, the extension plan
+- [`reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](reference/experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md) — the quotient claim sharpened
+- [`reference/experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md`](reference/experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md) — phases 0–8
+
+The geometric solver in layer 1 is a preliminary scaffold. Layers 4+
+are deliberately not built into the take-home; they are sketched as
+the path forward, not pretended into the artifact.
+
+## Operating Modes
+
+Two named modes cover the operating story; they map to a single snap
+tolerance applied uniformly.
+
+| Mode | Snap | When to use |
+| --- | --- | --- |
+| `conservative` (default) | 0.5 | Submission / audit / canonical bundle |
+| `liberal` | 0.75 | Slightly wider snap; recovers a few more candidates with mild over-merging |
+
+```bash
+python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out --mode conservative
+python3 tokenize_dxf.py "Airport Doors_MEZZ.dxf" out --mode liberal
+```
+
+`0.75` is chosen because `1.0`, `1.5`, and `2.0` distort family counts
+more aggressively (especially columns and curtain walls) for only a
+marginal coverage gain.
+
+### Advanced override: `--snap-tolerance`
+
+For experiments, `--snap-tolerance` overrides `--mode` and accepts:
+
+```bash
+# scalar, uniform across all families
+--snap-tolerance 0.5
+
+# per-family map (unspecified families fall back to the mean of provided values)
+--snap-tolerance walls=0.5,columns=0.25,curtain_walls=0.35
+
+# adaptive: elbow of the wall-family degree-4+ histogram, applied uniformly
+--snap-tolerance adaptive
+```
+
+The adaptive mode picks the elbow via the second-difference maximum
+over `[0.1, 0.25, 0.5, 1.0]`; on this file it returns `0.5`,
+matching `conservative`. This is an advanced surface, not the headline.
 
 ## Library, REPL, and review surfaces
 
-The same extraction is packaged as a library so the dashboard, merge
-lab, REPL, and agent-review script all consume one `AnalysisDataset`:
+The same extraction is packaged so the dashboard, merge lab, REPL, and
+agent-review script all consume one `AnalysisDataset`:
 
 ```bash
-# full HITL bundle (regenerates dashboard + merge lab, none tracked by git)
-python3 -m augrade.cli.pipeline "Airport Doors_MEZZ.dxf" out_bundle
+# full HITL bundle (regenerates dashboard + merge lab; none tracked)
+python3 -m augrade.cli.pipeline "Airport Doors_MEZZ.dxf" out_bundle --mode conservative
 
 # interactive workbench
 python3 -m augrade.repl --input "Airport Doors_MEZZ.dxf" --output out_bundle
 
-# programmatic merge review using the library (produces agent_labels.json)
+# programmatic merge review using the library
 python3 agent_merge_review.py "Airport Doors_MEZZ.dxf"
 ```
 
-The library refactor was the point — it let `tokenize_dxf.py` stay a
-tight stdlib file while giving every surface (dashboard, merge lab,
-REPL, agent script) a shared data model.
-
-Review surfaces live in [`augrade/review/`](augrade/review/) as a
-subpackage, isolated from the core so you can read `augrade/extract.py`,
-`augrade/geometry.py`, `augrade/dataset.py`, `augrade/merge.py`, and
-`augrade/provenance.py` without paging through ~2500 lines of HTML
-generator. The generated artifacts (`dashboard.html`, `merge_lab.html`,
+The library exists to make the extraction reusable — it is not the
+main act. Review surfaces live in [`augrade/review/`](augrade/review/)
+as a subpackage so `augrade/extract.py`, `augrade/geometry.py`,
+`augrade/dataset.py`, `augrade/merge.py`, and `augrade/provenance.py`
+can be read without paging through ~2500 lines of HTML generator. The
+generated HTML/JSON dumps (`dashboard.html`, `merge_lab.html`,
 `merge_lab_data.json`, `dashboard_assets/`, `provenance_index.json`,
-`pipeline_manifest.json`) are gitignored — regenerate via the pipeline
-command above.
+`pipeline_manifest.json`) are gitignored — regenerate via the
+pipeline command above.
 
 ## What the analysis found
 
-The file is not geometry plus random noise. It's authored variation
+The file is not geometry plus random noise. It is authored variation
 over a stable object structure: layer-schema differences, carrier
 differences (`LINE` vs `LWPOLYLINE` vs `HATCH` vs `CIRCLE`),
-decomposition differences, drafting-zone differences.
+decomposition differences, drafting-zone differences. Three concrete
+findings fed back into the solver's defaults:
 
-Three concrete findings from the analysis fed back into the solver's
-defaults:
-
-1. **Cross-layer pooling is real.** `A-GLAZING MULLION` (`LINE`-only) and
-   `A-GLAZING-MULLION` (`LWPOLYLINE`-only) are the same physical mullions
-   drawn with different CAD conventions, 97% spatial overlap. That's
-   why `FAMILY_LAYER_MAP["curtain_walls"]` pools both. See
-   [`reference/process/layer_normalization_analysis.md`](reference/process/layer_normalization_analysis.md).
+1. **Cross-layer pooling is real.** `A-GLAZING MULLION` (`LINE`-only)
+   and `A-GLAZING-MULLION` (`LWPOLYLINE`-only) are the same physical
+   mullions drawn with different CAD conventions, ~97% spatial
+   overlap. That is why `FAMILY_LAYER_MAP["curtain_walls"]` pools both.
 
 2. **Merges factor into two quotients.** A programmatic quotient
    decidable from provenance alone (same `canonical_layer` + gap ≈ 0
    + different `source_kind`) and a contextual quotient that needs
-   neighborhood reasoning. 29/29 curtain-wall merges on this file
-   are programmatic; only 1/28 wall merges are. See
-   [`reference/research/programmatic_vs_contextual_merges.md`](reference/research/programmatic_vs_contextual_merges.md).
+   neighborhood reasoning. On this file 29/29 curtain-wall merges are
+   programmatic; only 1/28 wall merges are.
 
-3. **Snap tolerance is family-typed in the limit.** The wall-family
-   degree-4+ histogram has a discernible elbow around 0.5 on this
-   file. Columns want a tighter snap (fewer distinct corners to
-   merge); curtain walls want something in between. `--snap-tolerance`
-   accepts all three modes for this reason.
+3. **Snap tolerance has an elbow.** The wall-family degree-4+
+   histogram has a discernible elbow around 0.5; `0.75` recovers a few
+   more polygons at the cost of some merge precision. The two named
+   modes encode this directly.
 
-## Extension direction
-
-The solver is Layer 1–2 of a longer stack; the remaining layers are
-staged in [`reference/THESIS.md`](reference/THESIS.md) and the two
-experiment docs. The short version:
-
-1. Label candidate pairs (positives + negatives) through the merge lab.
-2. Sparse edge scorer on pair features — linear, then tree.
-3. Prototype memory (Hopfield-style margin) on expert labels.
-4. GNN only as consistency propagation across already-scored pair
-   relations, not as the primary representation.
-5. Rewrite-invariance tests: generate equivalent views of the same
-   relation (split/merge collinear segments, swap direct-vs-graph-face
-   carriers, perturb the snap lattice, remap between companion
-   layers) and require the learned state to be stable.
-
-## How to explain this to a structural engineer
-
-- A DXF doesn't store semantic wall or column objects, it stores
-  drafting primitives.
-- The task is to reconstruct the closed footprints a human would
-  recognize as elements.
-- Columns are easiest (many are already circles or compact outlines).
-- Curtain walls are regular local panel footprints.
-- Walls are hardest because they're mostly fragmented linework with
-  high-degree junctions.
-- The algorithm takes the obvious closed shapes, reconstructs the
-  rest from connectivity, filters by family geometry, and preserves
-  source provenance.
+The slogan tying these together is **"pool for geometry, tag for
+provenance"** — align cross-domain views (layer variants, carrier
+choices, decomposition conventions) at the semantic level, preserve
+domain discernibility as a residual side channel. That is the same
+shape as *structured representation alignment* in the co-training
+literature, applied to authored drafting rewrites rather than the
+sim-to-real gap. Full framing in
+[`reference/research/thesis.md`](reference/research/thesis.md).
 
 ## Current limits
 
@@ -160,7 +190,7 @@ These are the natural next steps, not hidden assumptions.
 tokenize_dxf.py                       stdlib solver (reviewer entry point)
 DESIGN.md                             one-page approach + failure modes
 README.md                             this file
-requirements.txt                      stdlib note (+ ezdxf for the library-side)
+requirements.txt                      stdlib note (+ optional ezdxf for two library modules)
 agent_merge_review.py                 programmatic merge review via the library
 agent_labels.json                     87 auto-labels produced by the above
 
@@ -179,9 +209,9 @@ augrade/                              library and review surfaces
   review/                             isolated HITL: dashboard, merge lab, labels
 
 reference/
-  THESIS.md                           framing + extension plan (read first)
-  process/layer_normalization_analysis.md
+  research/thesis.md                  framing + extension plan
   research/programmatic_vs_contextual_merges.md
+  process/layer_normalization_analysis.md
   experiments/INDEPENDENT_LATENT_DIMENSIONS_MEMO.md
   experiments/LATENT_DIMENSIONS_EXPERIMENT_CHECKLIST.md
 
@@ -190,11 +220,10 @@ out/                                  canonical generated bundle (SVGs + JSON + 
 
 ## Bottom line
 
-A transparent geometric pipeline run by a single stdlib command
-produces the graded polygons; a library + REPL + review subpackage
-sit next to it for the HITL loop that the extension plan depends on;
-the reference docs frame the whole thing as structured representation
-alignment and lay out what the next layers of the stack look like.
-The defaults, pooling choices, and `--snap-tolerance` modes in the
-solver are defended by the findings in the reference docs, not chosen
-by hand.
+A single stdlib command produces the graded polygons; a library, REPL,
+and isolated review subpackage sit next to it for the HITL loop the
+extension plan depends on; the reference docs frame the whole thing
+as structured representation alignment and lay out what the next
+layers of the stack look like. The defaults, pooling choices, and
+mode names in the solver are defended by the findings in the
+reference docs, not chosen by hand.

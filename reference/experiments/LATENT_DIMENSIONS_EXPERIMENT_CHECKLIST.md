@@ -9,7 +9,7 @@ Test the hypothesis that cleanup and merge decisions in authored architectural D
 Primary references:
 
 - [`INDEPENDENT_LATENT_DIMENSIONS_MEMO.md`](./INDEPENDENT_LATENT_DIMENSIONS_MEMO.md)
-- [`../THESIS.md`](../THESIS.md)
+- [`../research/thesis.md`](../research/thesis.md)
 - [`../process/layer_normalization_analysis.md`](../process/layer_normalization_analysis.md)
 
 Core tooling (regenerated on demand via `python -m augrade.cli.pipeline <dxf> <out>`; not tracked):
